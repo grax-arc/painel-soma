@@ -344,6 +344,7 @@ td.lote-cell{border-left:4px solid var(--lc,var(--line));font-family:var(--mono)
 }
 </style>
 
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("ruptura-theme")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 <div class="app">
   <aside class="side">
     <div class="brand"><div class="mark">S</div><div><div class="bname">SOMA CO</div><div class="bsub">Operações · Colômbia</div></div></div>
@@ -565,7 +566,7 @@ let store={};try{store=JSON.parse(localStorage.getItem("ruptura-soma")||"{}")}ca
 const save=()=>{try{localStorage.setItem("ruptura-soma",JSON.stringify(store))}catch(e){}};
 $("#upd").textContent=META.atualizado;
 /* tema claro/escuro: segue o sistema por padrão; o botão fixa a escolha neste navegador */
-try{const t0=localStorage.getItem("ruptura-theme");if(t0)document.documentElement.dataset.theme=t0}catch(_){}
+{let t0="dark";try{t0=localStorage.getItem("ruptura-theme")||"dark"}catch(_){}document.documentElement.dataset.theme=t0}
 $("#theme-btn").addEventListener("click",()=>{const dark=document.documentElement.dataset.theme==="dark"||(!document.documentElement.dataset.theme&&matchMedia("(prefers-color-scheme: dark)").matches);const t=dark?"light":"dark";document.documentElement.dataset.theme=t;try{localStorage.setItem("ruptura-theme",t)}catch(_){}
   Chart.defaults.color=css("--muted");for(const f of [render,renderLotes,renderFat,renderDist,renderPlan])try{f()}catch(_){}});
 
