@@ -1,0 +1,979 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Ruptura SOMA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control bar on top (period), then KPI strip, then rupture board, then charts. Ops console, not a brochure. */
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --line:#e3e1d9; --fg:#1d1c19; --muted:#6a675e; --soft:#f0eee7;
+  --side:#f0eee8; --accent:#1d4ed8; --pina:#1f8a70; --naranja:#e07a1f; --shaker:#5b63d6;
+  --good:#1a7f4b; --warn:#b8720a; --crit:#c2322f; --critbg:#fbe9e8; --warnbg:#fbf1dc; --goodbg:#e4f3ea;
+  --font:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141412; --surface:#1d1d1a; --line:#33322d; --fg:#ecebe5; --muted:#a09d93; --soft:#262622;
+  --side:#191916; --accent:#7aa2ff; --pina:#2a9f7a; --naranja:#cc7028; --shaker:#7f87e8;
+  --good:#4fc98a; --warn:#e3a640; --crit:#f07a74; --critbg:#3a1f1e; --warnbg:#3a2f17; --goodbg:#17311f; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#141412; --surface:#1d1d1a; --line:#33322d; --fg:#ecebe5; --muted:#a09d93; --soft:#262622;
+  --side:#191916; --accent:#7aa2ff; --pina:#2a9f7a; --naranja:#cc7028; --shaker:#7f87e8;
+  --good:#4fc98a; --warn:#e3a640; --crit:#f07a74; --critbg:#3a1f1e; --warnbg:#3a2f17; --goodbg:#17311f; color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.45;margin:0}
+.app{display:grid;grid-template-columns:228px minmax(0,1fr);min-height:100%}
+.side{background:var(--side);border-right:1px solid var(--line);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:12px;padding-block:18px 20px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;display:flex;flex-direction:column;gap:18px;min-width:0}
+.brand{display:flex;gap:10px;align-items:center}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-weight:600;font-size:16px;letter-spacing:-.02em}
+.bname{font-weight:600;font-size:14px;line-height:1.15}.bsub{font-size:11.5px;color:var(--muted)}
+.tabs{display:flex;flex-direction:column;gap:2px}
+.tabs button{font:inherit;font-size:13.5px;font-weight:500;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;text-align:left;display:flex;align-items:center;gap:9px;width:100%}
+.tabs button svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button:hover{background:var(--soft);color:var(--fg)}
+.tabs button.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 0 var(--line),0 0 0 1px var(--line)}
+.tabs .badge{margin-left:auto;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;background:var(--critbg);color:var(--crit)}
+.tabs .badge:empty{display:none}
+.side-foot{margin-top:auto;display:grid;gap:6px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.side-foot .num{color:var(--fg);font-size:12.5px}
+.main{padding-right:max(16px,env(safe-area-inset-right,0px));padding-left:24px;padding-block:18px 48px;display:grid;gap:18px;align-content:start;min-width:0;max-width:1240px}
+.page-h{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:flex-end;justify-content:space-between;padding-bottom:4px}
+.page-h p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:70ch}
+.page-h .upd{font-size:12px}
+.alerts{display:grid;gap:6px}
+.alert{display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:8px;font-size:13px;border:1px solid transparent}
+.alert.crit{background:var(--critbg);color:var(--crit)}
+.alert.warn{background:var(--warnbg);color:var(--warn)}
+.alert b{font-family:var(--mono)}
+.alert .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;gap:10px}
+  .tabs{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:2px}
+  .tabs button{white-space:nowrap;width:auto}
+  .side-foot{display:none}
+  .main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-block:14px 40px}
+}
+h1{font-size:22px;margin:0;font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+h2{font-size:15px;margin:0;font-weight:600}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.upd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--soft);border:1px solid var(--line);font-size:12px;white-space:nowrap}
+.pill.crit{background:var(--critbg);color:var(--crit);border-color:transparent}
+.pill.warn{background:var(--warnbg);color:var(--warn);border-color:transparent}
+.pill.good{background:var(--goodbg);color:var(--good);border-color:transparent}
+
+td input.inl{font:inherit;font-family:var(--mono);font-size:12.5px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);width:72px;text-align:right}
+.dcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.dcard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:10px;min-width:0}
+.dcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.barrow{display:grid;grid-template-columns:150px 1fr 60px;gap:8px;align-items:center;font-size:12.5px}
+.barrow .b{height:10px;border-radius:3px;background:var(--soft);overflow:hidden;display:flex}
+.barrow .b i{display:block;height:100%}
+.dtab th,.dtab td{padding:5px 6px;font-size:12.5px}
+.reco details summary{font-size:12px}
+.reco{background:var(--soft);border-radius:8px;padding:10px 12px;font-size:13px;display:grid;gap:6px}
+.reco b.big{font-size:16px}
+.fhead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.fhead select{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg);max-width:100%}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.slot{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:6px;min-width:0}
+.slot .files{display:grid;gap:4px;font-size:12.5px}
+.slot .files div{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.slot .files a{color:var(--accent);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.slot input[type=file]{font-size:12px;max-width:100%}
+.rep{display:grid;gap:14px}
+.fx{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--soft)}
+.fx label{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.fx input[type=number]{width:110px}
+.conv{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px}
+.conv .out{font-family:var(--mono);font-weight:500}
+.rep details{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.rep summary{font-weight:600;font-size:14px;cursor:pointer;color:var(--fg)}
+.rep table td,.rep table th{white-space:normal;max-width:360px;font-size:12.5px;padding:6px 8px}
+.rep tr.sec td{background:var(--soft);font-weight:600;text-align:left}
+.rep tr.tot td{font-weight:600}
+.rep td.ex{color:var(--muted);font-size:11.5px;text-align:left;max-width:300px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button,.seg button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+.presets button:hover,.seg button:hover{background:var(--soft)}
+.presets button.on,.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.dates{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dates label{font-size:12px;color:var(--muted)}
+input[type=date],input[type=number]{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg)}
+input[type=number]{width:88px;text-align:right;font-family:var(--mono)}
+.chk{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kpi{background:var(--surface);padding:12px 14px;min-width:0}
+.kpi .v{font-family:var(--mono);font-size:22px;font-weight:500;line-height:1.1;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11.5px;color:var(--muted);margin-top:4px}
+
+section.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:12px;min-width:0}
+.sec-h{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.sec-h p{margin:0;color:var(--muted);font-size:12.5px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+th:first-child,td:first-child{text-align:left}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.sw.p{background:var(--pina)}.sw.n{background:var(--naranja)}.sw.s{background:var(--shaker)}
+.rup{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.rcard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:10px;min-width:0}
+.rcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rcard .stock{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:12.5px;align-items:center}
+.rcard .stock span:nth-child(odd){color:var(--muted)}
+.scen{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13px;border-top:1px solid var(--line);padding-top:8px}
+.scen .lab{color:var(--muted);font-size:12px}
+.scen .rate{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.scen .date{font-family:var(--mono);font-weight:500;text-align:right}
+.scen .date.crit{color:var(--crit)}.scen .date.warn{color:var(--warn)}.scen .date.good{color:var(--good)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.charts.c4{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.chart.sm{height:220px}
+.ctab td,.ctab th{padding:6px 8px;font-size:12.5px}
+.ctab td.d{font-family:var(--mono);font-weight:500}
+.ctab tr.sub td{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;background:var(--soft)}
+.chart{position:relative;height:260px;min-width:0}
+.chart.tall{height:300px}
+.span2{grid-column:1/-1}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.note{font-size:12px;color:var(--muted)}
+.howto{font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+.howto code{font-family:var(--mono);background:var(--soft);padding:1px 5px;border-radius:4px;color:var(--fg)}
+table.sheet th{background:var(--soft);border:1px solid var(--line);text-align:center;white-space:nowrap}
+table.sheet td{border:1px solid var(--line);padding:5px 8px;white-space:nowrap}
+table.sheet td.lt{background:color-mix(in srgb,var(--lc,transparent) 28%,var(--surface))}
+table.sheet td.lt.num{font-family:var(--mono)}
+table.sheet tr.usa td.prod{font-weight:600}
+table.sheet tr.add td{background:var(--soft)}
+table.sheet input,table.sheet select{font:inherit;font-size:12.5px;padding:3px 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--fg);width:100%;min-width:0}
+table.sheet input[type=number]{font-family:var(--mono);text-align:right;width:90px}
+table.sheet input[type=date]{width:130px}
+table.sheet select.est{min-width:170px}
+table.sheet select[data-act=destino],table.sheet select#a-dest{min-width:110px}
+table.sheet td.stack{display:grid;gap:4px}
+table.sheet input.bod{width:120px}
+table.sheet input.nota{width:160px}
+table.ltot th{text-align:right}table.ltot th:first-child{text-align:left}
+table.ltot td.num{font-family:var(--mono)}
+table.ltot tr.tot td{font-weight:600;border-top:2px solid var(--line)}
+.dest-bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.newdest{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.newdest input[type=text]{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg);width:220px;max-width:100%}
+.presets button .x{margin-left:6px;opacity:.6}
+.lform{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 10px;align-items:end}
+.lform label{display:grid;gap:3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.lform input,.lform select{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--fg);width:100%;min-width:0}
+.lform input[type=number]{text-align:left;font-family:var(--mono);width:100%}
+.btn{font:inherit;font-size:13px;font-weight:500;padding:7px 14px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line);font-weight:400;padding:4px 9px;font-size:12px}
+.btn.ghost.danger{color:var(--crit);border-color:var(--crit)}
+td select{font:inherit;font-size:12.5px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+td.lote-cell{border-left:4px solid var(--lc,var(--line));font-family:var(--mono)}
+.lsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.lsum .kpi{border:1px solid var(--line);border-radius:8px}
+.empty,td.empty{white-space:normal}
+.empty{padding:18px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:8px}
+.kpis.five{grid-template-columns:repeat(5,1fr)}
+@media (max-width:1100px){.kpis.five{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:760px){.kpis,.kpis.five{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.kpi .v{font-size:19px}.chart{height:220px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="mark">S</div><div><div class="bname">SOMA CO</div><div class="bsub">Operações · Colômbia</div></div></div>
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button id="tab-ruptura" role="tab" data-tab="ruptura" class="on"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 4"/><path d="M3 21h18"/></svg>Ruptura e vendas<span class="badge" id="nb-rup"></span></button>
+      <button id="tab-lotes" role="tab" data-tab="lotes"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Controle de lotes<span class="badge" id="nb-lot"></span></button>
+      <button id="tab-cedi" role="tab" data-tab="cedi"><svg viewBox="0 0 24 24"><path d="M3 21V8l4-4h10l4 4v13"/><path d="M3 12h18M9 21v-6h6v6"/></svg>Ruptura por CEDI<span class="badge" id="nb-cedi"></span></button>
+      <button id="tab-dist" role="tab" data-tab="dist"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v4M12 11l-6 6M12 11l6 6"/></svg>Distribuição<span class="badge"></span></button>
+      <button id="tab-faturas" role="tab" data-tab="faturas"><svg viewBox="0 0 24 24"><path d="M6 3h9l5 5v13H6z"/><path d="M15 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>Faturas Melonn<span class="badge" id="nb-fat"></span></button>
+    </nav>
+    <div class="side-foot">
+      <div class="eyebrow">Dados Shopify</div>
+      <div class="num" id="upd"></div>
+      <div><span class="pill good">Somente pedidos pagos</span></div>
+      <div>Para atualizar, peça no chat: <b>“atualiza o painel”</b></div>
+    </div>
+  </aside>
+  <main class="main">
+
+  <div class="page-h" data-tab="ruptura">
+    <div><div class="eyebrow">Shopify · Melonn · Piña, Naranja e Shaker</div><h1>Ruptura e vendas</h1><p>Escolha o período de referência; ritmo de venda, cenários de ruptura e gráficos recalculam na hora.</p></div>
+  </div>
+  <div class="alerts" id="alerts" data-tab="ruptura"></div>
+
+  <div class="bar" id="perbar" role="group" aria-label="Período" data-tab="ruptura,cedi">
+    <span class="eyebrow">Período</span>
+    <div class="presets" id="presets"></div>
+    <div class="dates">
+      <label for="d1">De</label><input type="date" id="d1">
+      <label for="d2">Até</label><input type="date" id="d2">
+    </div>
+    <label class="chk"><input type="checkbox" id="inchoje"> incluir hoje (dia parcial)</label>
+  </div>
+
+  <div class="kpis" id="kpis" data-tab="ruptura"></div>
+
+  <section class="card" data-tab="ruptura">
+    <div class="sec-h">
+      <h2>Ponto de ruptura por SKU</h2>
+      <p>Estoque disponível (Shopify, descontando pedidos já comprometidos) + em trânsito ÷ ritmo de venda do período selecionado.</p>
+    </div>
+    <div class="rup" id="rup"></div>
+    <div class="note">Cenários: <b>Mínimo</b> = média dos 3 dias mais fracos do período · <b>Média</b> = média diária do período · <b>Pico</b> = média dos 3 dias mais fortes do período. Selecione um período de pico (ex.: 15–17/09) para ver a ruptura em escala maior. O trânsito vem dos lotes marcados “Em trânsito” abaixo; “Ajuste manual” é um extra salvo só neste navegador.</div>
+  </section>
+
+  <section class="card" id="mel-sec" data-tab="melonn" hidden>
+    <div class="sec-h">
+      <h2>Estoque Melonn por bodega — reporte de inventário</h2>
+      <p id="mel-st">Baixe na Melonn: Reporte inventario → filtre <b>uma bodega</b> → Descargar reporte. Solte o arquivo aqui.</p>
+    </div>
+    <div class="fhead">
+      <label class="chk">Bodega do relatório <select id="mel-bod"><option>Bogotá</option><option>Medellín</option><option>Cali</option><option>Barranquilla</option></select></label>
+      <input type="file" id="mel-file" accept=".xlsx,.xls,.csv" disabled>
+      <span class="note">Lê no seu navegador os SKUs SOMAPINA, SOMANARANJA e SHAKER: disponível, reservada, alistada e esperada.</span>
+    </div>
+    <div class="tbl"><table id="mel-tab"></table></div>
+    <div class="note" id="mel-note">Quando existe leitura da Melonn para uma bodega, a <b>esperada</b> dela vira o trânsito daquele CEDI na projeção (substitui os lotes para fins de trânsito; os lotes continuam como registro da fábrica).</div>
+  </section>
+
+  <div class="page-h" data-tab="lotes">
+    <div><div class="eyebrow">Control de despacho</div><h1>Controle de lotes</h1><p>Uma linha por despacho da fábrica, na ordem dos lotes. O que está “En tránsito” para a Colômbia entra na projeção de ruptura.</p></div>
+  </div>
+  <section class="card" id="lotes-sec" data-tab="lotes">
+    <div class="sec-h">
+      <div class="presets" id="destbar"></div>
+      <p id="lotes-st">Carregando lotes…</p>
+    </div>
+    <div class="tbl"><table id="ltot" class="ltot"></table></div>
+    <div class="tbl"><table id="llot" class="ltot"></table></div>
+    <div class="tbl"><table id="ltab" class="sheet"></table></div>
+    <div class="dest-bar">
+      <form id="dform" class="newdest" autocomplete="off">
+        <input type="text" id="d-nome" placeholder="Nova aba de destino (ex.: Locatel)" maxlength="40">
+        <label class="chk" title="Marque se as unidades desse destino saem do estoque da Colômbia na Melonn"><input type="checkbox" id="d-co"> conta no estoque CO</label>
+        <button class="btn ghost" type="submit" id="d-add">+ Adicionar aba</button>
+      </form>
+      <span class="note" id="lnote"></span>
+    </div>
+  </section>
+
+  <section class="card" data-tab="ruptura" id="bolsas-sec">
+    <div class="sec-h">
+      <h2>Bolsas de envio — ruptura</h2>
+      <p>1 Soma Sculpt = bolsa pequena · 2 ou mais = bolsa grande (os mesmos pedidos que levam shaker). Estoque = corte de segunda da Melonn (material de empaque), projetado até hoje.</p>
+    </div>
+    <div class="rup" id="bolsas"></div>
+    <details><summary>Lançar corte da Melonn (segunda-feira) · histórico</summary>
+      <div class="bar" style="margin-top:8px">
+        <label class="chk">Bodega <select id="b-bod"><option>Bogotá</option><option>Medellín</option><option>Cali</option><option>Barranquilla</option></select></label>
+        <label class="chk">Pequena <input type="number" id="b-peq" min="0" step="1" style="width:90px"></label>
+        <label class="chk">Grande <input type="number" id="b-gr" min="0" step="1" style="width:90px"></label>
+        <label class="chk">A chegar · pequena <input type="number" id="b-epeq" min="0" step="1" value="0" style="width:80px"></label>
+        <label class="chk">A chegar · grande <input type="number" id="b-egr" min="0" step="1" value="0" style="width:80px"></label>
+        <button class="btn" type="button" id="b-save">Salvar corte</button>
+        <span class="note" id="b-st"></span>
+      </div>
+      <div class="tbl" style="margin-top:8px"><table id="b-hist"></table></div>
+    </details>
+  </section>
+
+  <section class="card" data-tab="ruptura">
+    <div class="sec-h"><h2>Estoque por bodega (Shopify)</h2><p>Disponível = em mãos − comprometido com pedidos pagos. Dias = disponível da bodega ÷ ritmo médio do período.</p></div>
+    <div class="tbl"><table id="bod"></table></div>
+  </section>
+
+  <section class="card" data-tab="ruptura">
+    <div class="sec-h">
+      <h2>Curva de estoque até a ruptura</h2>
+      <div class="seg" id="seg"></div>
+    </div>
+    <div class="chart tall"><canvas id="cProj"></canvas></div>
+    <div class="legend">Linha cheia = cenário Média · tracejada = Pico · pontilhada = Mínimo. O estoque considera disponível + em trânsito.</div>
+  </section>
+
+  <section class="card" data-tab="ruptura">
+    <div class="sec-h"><h2>Vendas no período</h2><p id="per-lbl"></p></div>
+    <div class="charts">
+      <div class="span2"><div class="eyebrow">Unidades por dia por SKU</div><div class="chart"><canvas id="cUnits"></canvas></div></div>
+      <div><div class="eyebrow">Pedidos pagos por dia</div><div class="chart"><canvas id="cOrders"></canvas></div></div>
+      <div><div class="eyebrow">Total de unidades por SKU no período</div><div class="chart"><canvas id="cTot"></canvas></div></div>
+    </div>
+    <details><summary>Ver tabela diária do período</summary><div class="tbl"><table id="daily"></table></div></details>
+  </section>
+
+  <div class="page-h" data-tab="cedi">
+    <div><div class="eyebrow">Bogotá · Medellín · Cali · Barranquilla</div><h1>Ruptura por CEDI</h1><p>A mesma análise da aba Ruptura, bodega por bodega: estoque da bodega, trânsito da bodega e o ritmo das regiões que ela atende, no período selecionado em Ruptura e vendas.</p></div>
+  </div>
+  <div class="alerts" id="cedi-alerts" data-tab="cedi"></div>
+  <section class="card" data-tab="cedi">
+    <div class="sec-h"><h2>Distribuição dos pedidos no período</h2><p>Pedidos do período × mix regional dos últimos 30 dias (CEDI mais próximo).</p></div>
+    <div class="charts c4">
+      <div><div class="eyebrow">Pedidos por CEDI</div><div class="chart sm"><canvas id="cCedi"></canvas></div></div>
+      <div><div class="eyebrow">Tamanho do pedido (bolsa)</div><div class="chart sm"><canvas id="cBolsa"></canvas></div></div>
+      <div><div class="eyebrow">Mix piña / naranja por CEDI</div><div class="chart sm"><canvas id="cMix"></canvas></div></div>
+      <div><div class="eyebrow">Pedidos por departamento (top 12)</div><div class="chart sm"><canvas id="cDep"></canvas></div></div>
+    </div>
+  </section>
+  <div id="cedi-blocks" data-tab="cedi" style="display:grid;gap:18px"></div>
+
+  <div class="page-h" data-tab="dist">
+    <div><div class="eyebrow">Bogotá · Medellín · Cali</div><h1>Distribuição entre bodegas</h1><p>Cada departamento atendido pelo CEDI mais próximo. Cobertura por bodega e para onde mandar o próximo lote.</p></div>
+  </div>
+  <section class="card" data-tab="dist">
+    <div class="sec-h">
+      <h2>Cobertura e recomendação por SKU</h2>
+      <p>Trânsito por CEDI = esperada do relatório Melonn. Cobertura = (disponível + trânsito) ÷ un./dia do CEDI.</p>
+    </div>
+    <div class="bar">
+      <span class="eyebrow">Base de vendas</span><span class="seg" id="d-base"><button data-v="d7">Últimos 7 dias</button><button data-v="d30">Últimos 30 dias</button></span>
+      <span class="seg" id="d-rota" hidden><button data-v="geo">Geográfico</button></span>
+      <label class="chk" id="d-cali-wrap"><input type="checkbox" id="d-cali"> Cali ativo</label>
+      <label class="chk"><input type="checkbox" id="d-bq"> Barranquilla ativo</label>
+      <label class="chk">Tamanho do próximo lote <input type="number" id="d-lote" value="4000" step="500" min="100" style="width:90px"></label>
+    </div>
+    <div class="dcards" id="dcards"></div>
+    <div class="dcards" id="dbolsas"></div>
+    <details><summary>Demanda por departamento e bodega que atende</summary><div class="tbl" style="margin-top:8px"><table id="dreg"></table></div></details>
+    <div class="note" id="dnote"></div>
+  </section>
+
+  <div class="page-h" data-tab="faturas">
+    <div><div class="eyebrow">Fechamento mensal · COP / BRL / USD</div><h1>Faturas Melonn</h1><p>Arquivos de cada ciclo, relatório de custo logístico por pedido e conversão para as três moedas.</p></div>
+  </div>
+  <section class="card" data-tab="dist">
+    <div class="sec-h">
+      <h2>Plano de reposição — como deveria ser enviado</h2>
+      <p>Simula dia a dia: demanda de cada CEDI (roteamento geográfico) × produção da fábrica. Cada dia útil produz um lote para o par SKU/bodega com menor cobertura prevista; entrega no dia seguinte.</p>
+    </div>
+    <div class="bar">
+      <label class="chk">Horizonte <select id="p-h"><option value="7">7 dias</option><option value="14" selected>14 dias</option><option value="30">30 dias</option></select></label>
+      <label class="chk">Cobertura-alvo <input type="number" id="p-alvo" value="10" min="1" step="1" style="width:64px"> dias</label>
+      <label class="chk">Produção/semana <input type="number" id="p-cap" value="10000" min="0" step="500" style="width:90px"> un.</label>
+      <label class="chk">Mix piña <input type="number" id="p-mix" value="50" min="0" max="100" step="5" style="width:60px"> %</label>
+      <label class="chk">Dias de produção <select id="p-dias"><option value="12345" selected>seg–sex</option><option value="123456">seg–sáb</option><option value="1234567">todos</option></select></label>
+      <label class="chk"><input type="checkbox" id="p-fixo" checked> envios em lotes fechados (tamanho do lote acima)</label>
+    </div>
+    <div class="kpis five" id="p-kpis"></div>
+    <div class="chart"><canvas id="cPlan"></canvas></div>
+    <div class="legend">Cobertura prevista (dias) de cada CEDI × SKU ao longo do horizonte, já com as entregas do plano. Linha tracejada = alvo.</div>
+    <div class="tbl"><table id="p-cal"></table></div>
+    <div class="note" id="p-note"></div>
+  </section>
+
+  <section class="card" id="fat-sec" data-tab="faturas">
+    <div class="sec-h">
+      <h2>Fechamento</h2>
+      <p id="fat-st">Carregando…</p>
+    </div>
+    <div class="fhead">
+      <label class="eyebrow" for="f-sel">Fechamento</label><select id="f-sel"></select>
+      <form id="fnew" class="newdest" autocomplete="off">
+        <input type="date" id="f-ini" title="Início do ciclo"><span class="note">→</span><input type="date" id="f-fim" title="Fim do ciclo">
+        <input type="month" id="f-prov" title="Mês da provisão">
+        <button class="btn ghost" type="submit" id="f-add">+ Novo fechamento</button>
+      </form>
+    </div>
+    <div id="fat-body" class="rep"></div>
+    <div class="note">Fluxo: o time sobe as faturas (imagem ou PDF), os dois Excel de cargos e o sell_orders do mês, informa o saldo da plataforma e marca <b>Pronto para fechar</b>. Depois, peça no chat <code>fecha as faturas de &lt;mês&gt;</code>: o relatório é calculado com a skill de faturas e publicado aqui, no mesmo formato de sempre (resumo, custo médio, provisão, faturas, mês/canal, destino), com o Excel completo para baixar.</div>
+  </section>
+
+  <section class="card" data-tab="ruptura">
+    <details><summary>Guia rápido do painel</summary>
+    <div class="howto" style="margin-top:8px">
+      <div>1. Escolha o período (atalhos ou datas). Tudo recalcula: KPIs, cenários, gráficos.</div>
+      <div>2. Compare: selecione a semana do pico (ex.: 15–17/09) e veja em quantos dias o estoque rompe se vender naquele ritmo.</div>
+      <div>3. O trânsito vem dos lotes “Em trânsito” para a Colômbia na aba Controle de lotes; “Ajuste manual” é um extra só deste navegador.</div>
+      <div>4. Para puxar vendas e estoque novos da Shopify, peça no chat <code>atualiza o painel</code>. O link do painel não muda.</div>
+      <div>5. A aba <b>Controle de lotes</b> segue a planilha de despacho: abas Soma USA / Soma CO / Soma MELI / SOMA GERAL, uma linha por despacho, totais por referência no topo. “En tránsito” na Soma CO entra na projeção desta aba.</div>
+      <div>7. <b>Bolsas</b>: o corte de segunda da Melonn (material de empaque) entra no bloco “Bolsas de envio”; o painel desconta o consumo diário (pequena = pedidos − shakers; grande = shakers) e mostra a ruptura por tipo e por CEDI.</div>
+      <div>6. A aba <b>Distribuição</b> mostra a cobertura por bodega e para onde mandar o próximo lote. A aba <b>Faturas Melonn</b> guarda os arquivos de cada fechamento e o relatório mensal de custo logístico em COP, BRL e USD.</div>
+    </div></details>
+  </section>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const ROWS=[{"d":"2026-08-01","o":458,"i":711,"p":301,"n":401,"s":2},{"d":"2026-08-02","o":272,"i":425,"p":208,"n":209,"s":0},{"d":"2026-08-03","o":313,"i":482,"p":199,"n":266,"s":1},{"d":"2026-08-04","o":339,"i":485,"p":240,"n":234,"s":-1},{"d":"2026-08-05","o":340,"i":532,"p":249,"n":271,"s":1},{"d":"2026-08-06","o":345,"i":541,"p":260,"n":271,"s":1},{"d":"2026-08-07","o":372,"i":567,"p":261,"n":294,"s":0},{"d":"2026-08-08","o":310,"i":490,"p":246,"n":230,"s":1},{"d":"2026-08-09","o":340,"i":512,"p":271,"n":234,"s":0},{"d":"2026-08-10","o":202,"i":320,"p":159,"n":154,"s":0},{"d":"2026-08-11","o":171,"i":346,"p":134,"n":142,"s":65},{"d":"2026-08-12","o":190,"i":433,"p":169,"n":163,"s":98},{"d":"2026-08-13","o":234,"i":510,"p":197,"n":198,"s":113},{"d":"2026-08-14","o":176,"i":402,"p":150,"n":155,"s":90},{"d":"2026-08-15","o":214,"i":458,"p":318,"n":30,"s":108},{"d":"2026-08-16","o":204,"i":406,"p":313,"n":0,"s":86},{"d":"2026-08-17","o":245,"i":489,"p":375,"n":2,"s":108},{"d":"2026-08-18","o":338,"i":751,"p":561,"n":0,"s":186},{"d":"2026-08-19","o":354,"i":839,"p":627,"n":0,"s":210},{"d":"2026-08-20","o":295,"i":691,"p":512,"n":4,"s":171},{"d":"2026-08-21","o":435,"i":1092,"p":539,"n":271,"s":279},{"d":"2026-08-22","o":623,"i":1582,"p":618,"n":548,"s":413},{"d":"2026-08-23","o":563,"i":1440,"p":531,"n":519,"s":382},{"d":"2026-08-24","o":520,"i":1332,"p":454,"n":528,"s":348},{"d":"2026-08-25","o":466,"i":1203,"p":451,"n":434,"s":308},{"d":"2026-08-26","o":493,"i":1319,"p":506,"n":461,"s":347},{"d":"2026-08-27","o":541,"i":1317,"p":487,"n":485,"s":339},{"d":"2026-08-28","o":702,"i":1725,"p":645,"n":632,"s":441},{"d":"2026-08-29","o":624,"i":1638,"p":576,"n":624,"s":436},{"d":"2026-08-30","o":732,"i":1852,"p":679,"n":661,"s":503},{"d":"2026-08-31","o":655,"i":1683,"p":616,"n":617,"s":446},{"d":"2026-09-01","o":680,"i":1669,"p":663,"n":581,"s":423},{"d":"2026-09-02","o":559,"i":1420,"p":515,"n":532,"s":369},{"d":"2026-09-03","o":536,"i":1366,"p":517,"n":499,"s":346},{"d":"2026-09-04","o":425,"i":1038,"p":399,"n":377,"s":258},{"d":"2026-09-05","o":495,"i":1189,"p":453,"n":429,"s":303},{"d":"2026-09-06","o":535,"i":1297,"p":512,"n":451,"s":327},{"d":"2026-09-07","o":551,"i":1334,"p":507,"n":492,"s":334},{"d":"2026-09-08","o":436,"i":1051,"p":403,"n":381,"s":264},{"d":"2026-09-09","o":600,"i":1578,"p":600,"n":562,"s":412},{"d":"2026-09-10","o":585,"i":1464,"p":571,"n":512,"s":377},{"d":"2026-09-11","o":482,"i":1237,"p":463,"n":447,"s":325},{"d":"2026-09-12","o":612,"i":1538,"p":593,"n":540,"s":402},{"d":"2026-09-13","o":705,"i":1797,"p":699,"n":618,"s":476},{"d":"2026-09-14","o":813,"i":2071,"p":818,"n":713,"s":537},{"d":"2026-09-15","o":1372,"i":3516,"p":1387,"n":1197,"s":919},{"d":"2026-09-16","o":1340,"i":3562,"p":1415,"n":1181,"s":950},{"d":"2026-09-17","o":980,"i":2558,"p":1016,"n":870,"s":667},{"d":"2026-09-18","o":629,"i":1366,"p":613,"n":572,"s":177},{"d":"2026-09-19","o":503,"i":960,"p":509,"n":442,"s":0},{"d":"2026-09-20","o":691,"i":1162,"p":602,"n":555,"s":0},{"d":"2026-09-21","o":1060,"i":1823,"p":990,"n":831,"s":0},{"d":"2026-09-22","o":1230,"i":2102,"p":1147,"n":950,"s":0},{"d":"2026-09-23","o":1244,"i":2075,"p":1137,"n":930,"s":0},{"d":"2026-09-24","o":1219,"i":2023,"p":1052,"n":963,"s":0},{"d":"2026-09-25","o":1075,"i":1954,"p":994,"n":886,"s":63},{"d":"2026-09-26","o":853,"i":2325,"p":938,"n":785,"s":592},{"d":"2026-09-27","o":865,"i":2273,"p":896,"n":785,"s":587},{"d":"2026-09-28","o":960,"i":2436,"p":922,"n":890,"s":619},{"d":"2026-09-29","o":911,"i":2339,"p":912,"n":821,"s":598},{"d":"2026-09-30","o":1042,"i":2817,"p":1065,"n":1006,"s":735},{"d":"2026-10-01","o":1112,"i":2989,"p":1129,"n":1080,"s":769},{"d":"2026-10-02","o":888,"i":2378,"p":961,"n":792,"s":616},{"d":"2026-10-03","o":759,"i":1968,"p":746,"n":698,"s":519},{"d":"2026-10-04","o":681,"i":1786,"p":676,"n":643,"s":460},{"d":"2026-10-05","o":760,"i":2020,"p":753,"n":735,"s":528},{"d":"2026-10-06","o":845,"i":2249,"p":878,"n":766,"s":590},{"d":"2026-10-07","o":832,"i":2258,"p":883,"n":783,"s":587},{"d":"2026-10-08","o":809,"i":2154,"p":837,"n":759,"s":554},{"d":"2026-10-09","o":695,"i":1839,"p":745,"n":618,"s":473},{"d":"2026-10-10","o":831,"i":2236,"p":859,"n":785,"s":586},{"d":"2026-10-11","o":653,"i":1722,"p":557,"n":707,"s":453},{"d":"2026-10-12","o":686,"i":1810,"p":656,"n":671,"s":478},{"d":"2026-10-13","o":676,"i":1839,"p":740,"n":606,"s":487},{"d":"2026-10-14","o":733,"i":1977,"p":791,"n":671,"s":511},{"d":"2026-10-15","o":811,"i":2239,"p":871,"n":772,"s":589},{"d":"2026-10-16","o":743,"i":1994,"p":797,"n":667,"s":527},{"d":"2026-10-17","o":660,"i":1788,"p":699,"n":618,"s":469},{"d":"2026-10-18","o":648,"i":1714,"p":685,"n":578,"s":450},{"d":"2026-10-19","o":839,"i":2273,"p":880,"n":789,"s":604},{"d":"2026-10-20","o":601,"i":1603,"p":640,"n":548,"s":415},{"d":"2026-10-21","o":713,"i":1892,"p":745,"n":652,"s":495},{"d":"2026-10-22","o":694,"i":1903,"p":731,"n":668,"s":504},{"d":"2026-10-23","o":572,"i":1609,"p":637,"n":541,"s":429},{"d":"2026-10-24","o":562,"i":1524,"p":580,"n":536,"s":405},{"d":"2026-10-25","o":733,"i":1886,"p":777,"n":613,"s":486},{"d":"2026-10-26","o":709,"i":1765,"p":705,"n":585,"s":476}];const STOCK={"p":{"nome":"Soma Piña","sku":"SOMAPINA","bod":{"Bogotá":[4571,1523],"Medellín":[3901,1335],"Cali":[216,85],"Barranquilla":[0,0]}},"n":{"nome":"Soma Naranja","sku":"SOMANARANJA","bod":{"Bogotá":[3639,1180],"Medellín":[1987,1095],"Cali":[600,97],"Barranquilla":[0,0]}},"s":{"nome":"Shaker Termo","sku":"Shaker","bod":{"Bogotá":[13335,884],"Medellín":[6566,757],"Cali":[1644,60],"Barranquilla":[0,0]}}};const META={"atualizado":"26/10/2026 17:40","hoje":"2026-10-26","parcial":"2026-10-26"};const DIST={"d30": {"Bogotá, D.C.": {"p": 5815, "n": 5418, "s": 3532}, "Antioquia": {"p": 4257, "n": 3715, "s": 2406}, "Cundinamarca": {"p": 2646, "n": 2359, "s": 1601}, "Valle del Cauca": {"p": 1789, "n": 1502, "s": 974}, "Santander": {"p": 1260, "n": 1275, "s": 792}, "Tolima": {"p": 1037, "n": 975, "s": 628}, "Meta": {"p": 785, "n": 688, "s": 463}, "Huila": {"p": 731, "n": 747, "s": 468}, "Norte de Santander": {"p": 734, "n": 673, "s": 429}, "Risaralda": {"p": 711, "n": 609, "s": 403}, "Boyacá": {"p": 598, "n": 565, "s": 372}, "Atlántico": {"p": 561, "n": 476, "s": 329}, "Caldas": {"p": 479, "n": 397, "s": 283}, "Casanare": {"p": 445, "n": 425, "s": 277}, "Bolívar": {"p": 365, "n": 342, "s": 221}, "Cesar": {"p": 345, "n": 245, "s": 174}, "Quindío": {"p": 331, "n": 266, "s": 183}, "Cauca": {"p": 330, "n": 297, "s": 192}, "Nariño": {"p": 320, "n": 297, "s": 195}, "Córdoba": {"p": 296, "n": 270, "s": 170}, "Magdalena": {"p": 259, "n": 213, "s": 136}, "Putumayo": {"p": 217, "n": 151, "s": 125}, "Caquetá": {"p": 203, "n": 186, "s": 132}, "La Guajira": {"p": 199, "n": 127, "s": 102}, "Arauca": {"p": 172, "n": 168, "s": 99}, "Sucre": {"p": 120, "n": 118, "s": 69}, "Guaviare": {"p": 54, "n": 51, "s": 33}, "Chocó": {"p": 41, "n": 44, "s": 23}, "Amazonas": {"p": 34, "n": 31, "s": 21}, "San Andrés, Providencia y Santa Catalina": {"p": 18, "n": 20, "s": 13}, "Guainía": {"p": 13, "n": 6, "s": 5}, "Vichada": {"p": 10, "n": 12, "s": 7}, "Vaupés": {"p": 0, "n": 4, "s": 1}}, "d7": {"Bogotá, D.C.": {"p": 1171, "n": 1042, "s": 797}, "Antioquia": {"p": 903, "n": 742, "s": 574}, "Cundinamarca": {"p": 548, "n": 457, "s": 369}, "Valle del Cauca": {"p": 336, "n": 296, "s": 219}, "Santander": {"p": 293, "n": 273, "s": 210}, "Tolima": {"p": 186, "n": 191, "s": 132}, "Meta": {"p": 170, "n": 130, "s": 107}, "Huila": {"p": 147, "n": 162, "s": 114}, "Norte de Santander": {"p": 150, "n": 127, "s": 100}, "Risaralda": {"p": 133, "n": 119, "s": 87}, "Boyacá": {"p": 127, "n": 113, "s": 87}, "Caldas": {"p": 100, "n": 77, "s": 65}, "Atlántico": {"p": 94, "n": 100, "s": 66}, "Casanare": {"p": 96, "n": 73, "s": 65}, "Bolívar": {"p": 91, "n": 67, "s": 55}, "Cesar": {"p": 85, "n": 58, "s": 49}, "Córdoba": {"p": 68, "n": 70, "s": 49}, "Quindío": {"p": 68, "n": 63, "s": 48}, "Nariño": {"p": 66, "n": 57, "s": 47}, "Magdalena": {"p": 62, "n": 47, "s": 35}, "Putumayo": {"p": 59, "n": 43, "s": 38}, "Cauca": {"p": 56, "n": 53, "s": 40}, "La Guajira": {"p": 51, "n": 30, "s": 27}, "Arauca": {"p": 37, "n": 42, "s": 26}, "Sucre": {"p": 26, "n": 28, "s": 17}, "Caquetá": {"p": 27, "n": 25, "s": 19}, "Amazonas": {"p": 7, "n": 10, "s": 6}, "Chocó": {"p": 9, "n": 9, "s": 6}, "Guaviare": {"p": 5, "n": 8, "s": 5}, "Vichada": {"p": 2, "n": 4, "s": 2}, "San Andrés, Providencia y Santa Catalina": {"p": 2, "n": 3, "s": 2}, "Guainía": {"p": 2, "n": 1, "s": 1}}, "rota": {"Bogotá, D.C.": {"Bogotá": 4102, "Medellín": 1513}, "Antioquia": {"Bogotá": 931, "Medellín": 2698}, "Cundinamarca": {"Bogotá": 1794, "Medellín": 650}, "Valle del Cauca": {"Bogotá": 1093, "Medellín": 557}, "Tolima": {"Bogotá": 707, "Medellín": 284}, "Santander": {"Bogotá": 586, "Medellín": 621}, "Huila": {"Bogotá": 525, "Medellín": 184}, "Meta": {"Bogotá": 509, "Medellín": 173}, "Risaralda": {"Bogotá": 174, "Medellín": 493}, "Norte de Santander": {"Bogotá": 168, "Medellín": 460}, "Atlántico": {"Bogotá": 138, "Medellín": 408}, "Boyacá": {"Bogotá": 374, "Medellín": 168}, "Caldas": {"Bogotá": 127, "Medellín": 287}, "Bolívar": {"Bogotá": 78, "Medellín": 285}, "Casanare": {"Bogotá": 279, "Medellín": 117}, "Cesar": {"Bogotá": 58, "Medellín": 235}, "Nariño": {"Bogotá": 218, "Medellín": 78}, "Cauca": {"Bogotá": 216, "Medellín": 98}, "Córdoba": {"Bogotá": 49, "Medellín": 206}, "Quindío": {"Bogotá": 200, "Medellín": 87}, "Magdalena": {"Bogotá": 50, "Medellín": 193}, "Caquetá": {"Bogotá": 145, "Medellín": 49}, "Putumayo": {"Bogotá": 143, "Medellín": 45}, "La Guajira": {"Bogotá": 42, "Medellín": 122}, "Arauca": {"Bogotá": 113, "Medellín": 37}, "Sucre": {"Bogotá": 29, "Medellín": 100}, "Guaviare": {"Bogotá": 41, "Medellín": 17}, "Chocó": {"Bogotá": 10, "Medellín": 27}, "Amazonas": {"Bogotá": 23, "Medellín": 9}, "San Andrés, Providencia y Santa Catalina": {"Bogotá": 5, "Medellín": 19}, "Guainía": {"Bogotá": 8, "Medellín": 6}, "Vichada": {"Bogotá": 7, "Medellín": 2}, "Vaupés": {"Bogotá": 2, "Medellín": 0}}, "geo": {"Bogotá, D.C.": "Bogotá", "Antioquia": "Medellín", "Cundinamarca": "Bogotá", "Valle del Cauca": "Cali", "Santander": "Bogotá", "Tolima": "Bogotá", "Meta": "Bogotá", "Huila": "Bogotá", "Norte de Santander": "Bogotá", "Risaralda": "Medellín", "Boyacá": "Bogotá", "Atlántico": "Barranquilla", "Caldas": "Medellín", "Casanare": "Bogotá", "Bolívar": "Barranquilla", "Cesar": "Barranquilla", "Quindío": "Bogotá", "Cauca": "Cali", "Nariño": "Cali", "Córdoba": "Medellín", "Magdalena": "Barranquilla", "Putumayo": "Cali", "Caquetá": "Bogotá", "La Guajira": "Barranquilla", "Arauca": "Bogotá", "Sucre": "Barranquilla", "Guaviare": "Bogotá", "Chocó": "Medellín", "Amazonas": "Bogotá", "San Andrés, Providencia y Santa Catalina": "Barranquilla", "Guainía": "Bogotá", "Vichada": "Bogotá", "Vaupés": "Bogotá"}, "rota_periodo": "01–22/10/2026", "vendas_periodo": {"d30": "23/09–22/10", "d7": "16–22/10"}};
+const SK=[["p","Piña","pina"],["n","Naranja","naranja"],["s","Shaker","shaker"]];
+const $=s=>document.querySelector(s);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt=n=>Math.round(n).toLocaleString("pt-BR");
+const f1=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+const pd=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const WD=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const dm=s=>{const d=pd(s);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")};
+const dmw=s=>WD[pd(s).getDay()]+" "+dm(s);
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const HOJE=pd(META.hoje);
+const LAST=ROWS[ROWS.length-1].d, FIRST=ROWS[0].d;
+let store={};try{store=JSON.parse(localStorage.getItem("ruptura-soma")||"{}")}catch(e){}
+const save=()=>{try{localStorage.setItem("ruptura-soma",JSON.stringify(store))}catch(e){}};
+$("#upd").textContent=META.atualizado;
+
+/* ---------- tabs ---------- */
+function showTab(t){const bar=$("#perbar");if(t==="cedi")$("#cedi-alerts").before(bar);else $("#kpis").before(bar);
+  document.querySelectorAll("[data-tab]").forEach(el=>{if(el.closest(".tabs"))return;el.hidden=!el.dataset.tab.split(",").includes(t)});
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
+  if(t==="ruptura"||t==="cedi"||t==="dist")Object.values(CH).forEach(c=>c.resize());}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+const h0=(location.hash||"").replace("#","");
+
+/* ---------- period ---------- */
+const d1=$("#d1"),d2=$("#d2"),inc=$("#inchoje");
+d1.min=d2.min=FIRST;d1.max=d2.max=LAST;
+const ontem=iso(addD(HOJE,-1));
+const PRESETS=[
+ ["Últimos 7 dias",()=>[iso(addD(HOJE,-7)),ontem]],
+ ["Últimos 14 dias",()=>[iso(addD(HOJE,-14)),ontem]],
+ ["Últimos 30 dias",()=>[iso(addD(HOJE,-30)),ontem]],
+ ["Este mês",()=>[iso(new Date(HOJE.getFullYear(),HOJE.getMonth(),1)),ontem]],
+ ["Mês passado",()=>[iso(new Date(HOJE.getFullYear(),HOJE.getMonth()-1,1)),iso(new Date(HOJE.getFullYear(),HOJE.getMonth(),0))]],
+ ["Pico 15–17/09",()=>["2026-09-15","2026-09-17"]],
+ ["Tudo",()=>[FIRST,ontem]],
+];
+const pb=$("#presets");
+PRESETS.forEach(([l,f],i)=>{const b=document.createElement("button");b.id="pre"+i;b.textContent=l;b.onclick=()=>{const[a,z]=f();d1.value=a;d2.value=z;store.preset=i;render()};pb.appendChild(b)});
+inc.checked=!!store.inchoje;
+if(store.d1&&store.d2){d1.value=store.d1;d2.value=store.d2}else{const[a,z]=PRESETS[0][1]();d1.value=a;d2.value=z;store.preset=0}
+[d1,d2].forEach(e=>e.onchange=()=>{store.preset=-1;render()});inc.onchange=render;
+
+/* ---------- transit inputs ---------- */
+store.tr=store.tr||{p:0,n:0,s:0};
+
+/* ---------- Melonn reporte inventario ---------- */
+let LOTES=[],DESTS=[],LREF=null,DREF=null,LWRITE=null;
+let MEL={},MREF=null;
+const SKUKEY={SOMAPINA:"p",SOMANARANJA:"n",SHAKER:"s"};
+const melEsp=(k,b)=>+(MEL[b]?.skus?.[k]?.esp||0);
+const melHas=k=>Object.values(MEL).some(m=>m.skus?.[k]);
+const melEspTotal=k=>Object.values(MEL).reduce((a,m)=>a+(+m.skus?.[k]?.esp||0),0);
+function parseMelonn(buf){
+  const wb=XLSX.read(buf,{type:"array"});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+  const norm=x=>String(x??"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+  let hi=rows.findIndex(r=>r.some(c=>norm(c)==="sku"));if(hi<0)throw new Error("não achei a coluna SKU no arquivo");
+  const H=rows[hi].map(norm);const col=re=>H.findIndex(h=>re.test(h));
+  const cSku=col(/^sku$/),cDisp=col(/disponible/),cRes=col(/reservad/),cAl=col(/alistad/),cEsp=col(/esperad/),cTr=col(/transito/),cBod=col(/bodega|almacen/);
+  if(cSku<0||cDisp<0)throw new Error("colunas SKU/Cantidad disponible não encontradas");
+  const out={};const bods=new Set();
+  rows.slice(hi+1).forEach(r=>{const k=SKUKEY[String(r[cSku]||"").trim().toUpperCase()];if(!k)return;const n=i=>i>=0?(+String(r[i]).replace(/[^\d.-]/g,"")||0):0;
+    if(cBod>=0&&r[cBod])bods.add(String(r[cBod]));
+    const o=out[k]||{disp:0,res:0,al:0,esp:0,tr:0};o.disp+=n(cDisp);o.res+=n(cRes);o.al+=n(cAl);o.esp+=n(cEsp);o.tr+=n(cTr);out[k]=o});
+  if(!Object.keys(out).length)throw new Error("nenhum dos SKUs do painel apareceu no arquivo");
+  return{skus:out,bodegasNoArquivo:[...bods]};
+}
+function renderMel(){
+  const t=$("#mel-tab");const bods=Object.keys(MEL).sort();
+  if(!bods.length){t.innerHTML=`<tr><td class="empty">Nenhuma leitura ainda. A primeira leitura por bodega já alimenta o trânsito por CEDI na aba Distribuição.</td></tr>`;return}
+  t.innerHTML=`<tr><th>Bodega</th><th>Lido em</th>${SK.map(x=>`<th>${x[1]} disp.</th><th>${x[1]} compr.</th><th>${x[1]} esperada</th>`).join("")}<th></th></tr>`+bods.map(b=>{const m=MEL[b];return `<tr><td><b>${b}</b></td><td class="num">${m.lido_em?new Date(m.lido_em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"—"}</td>${SK.map(([k])=>{const o=m.skus?.[k]||{};return `<td class="num">${fmt(o.disp||0)}</td><td class="num">${fmt((o.res||0)+(o.al||0))}</td><td class="num"><b>${fmt(o.esp||0)}</b></td>`}).join("")}<td><button class="btn ghost danger" data-melrm="${b}" ${LWRITE===false?"disabled":""}>×</button></td></tr>`}).join("")+
+    `<tr><td><b>Total Melonn</b></td><td></td>${SK.map(([k])=>`<td class="num"><b>${fmt(bods.reduce((a,b)=>a+(+MEL[b].skus?.[k]?.disp||0),0))}</b> <span class="note">Shopify ${fmt(Object.values(STOCK[k].bod).reduce((a,[x])=>a+x,0))}</span></td><td class="num">${fmt(bods.reduce((a,b)=>a+(+MEL[b].skus?.[k]?.res||0)+(+MEL[b].skus?.[k]?.al||0),0))}</td><td class="num"><b>${fmt(melEspTotal(k))}</b></td>`).join("")}<td></td></tr>`;
+}
+$("#mel-file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f||!MREF)return;const b=$("#mel-bod").value;$("#mel-st").textContent=`Lendo ${f.name}…`;
+  try{const buf=await f.arrayBuffer();const r=parseMelonn(buf);
+    if(r.bodegasNoArquivo.length>1)$("#mel-st").textContent=`Atenção: o arquivo traz ${r.bodegasNoArquivo.length} bodegas (${r.bodegasNoArquivo.join(", ")}). Gere um relatório por bodega para o trânsito por CEDI ficar certo. Salvei tudo em “${b}”.`;
+    else $("#mel-st").textContent=`Leitura de ${b} salva: `+SK.map(([k,n])=>`${n} disp. ${fmt(r.skus[k]?.disp||0)} / esperada ${fmt(r.skus[k]?.esp||0)}`).join(" · ");
+    await MREF.doc(b.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()).set({bodega:b,skus:r.skus,arquivo:f.name,lido_em:new Date().toISOString()});
+  }catch(err){$("#mel-st").textContent="Não consegui ler: "+(err.message||err.code)}
+  e.target.value=""});
+$("#mel-tab").addEventListener("click",async e=>{const b=e.target.closest("button[data-melrm]");if(!b||!MREF)return;if(b.dataset.arm!=="1"){b.dataset.arm="1";b.textContent="remover?";setTimeout(()=>{b.dataset.arm="";b.textContent="×"},4000);return}
+  try{await MREF.doc(b.dataset.melrm.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()).delete()}catch(err){$("#mel-st").textContent="Erro: "+(err.message||err.code)}});
+renderMel();
+
+/* ---------- lotes (db compartilhado) ---------- */
+let curDest="geral";
+const BUILTIN=[{id:"eua",nome:"Soma USA",co:false,ordem:1},{id:"co",nome:"Soma CO",co:true,ordem:2},{id:"meli",nome:"Soma MELI",co:false,ordem:3}];
+const PROD={p:"Soma Sculpt Piña",n:"Soma Sculpt Naranja",s:"Shaker Termo"};
+const ESTADOS=["Produzido","Em trânsito","Entregue"];
+const normEst=e=>e==="Entregado a Melonn"?"Entregue":(e||"Produzido");
+// legado: produto usa_p/usa_n e bodega Farmarun → destino
+const normLote=l=>{const o={...l};if(!o.destino){o.destino=String(o.produto||"").startsWith("usa")?"eua":/farmarun|meli/i.test(o.bodega||"")?"meli":"co"}
+  if(o.produto==="usa_p")o.produto="p";if(o.produto==="usa_n")o.produto="n";o.estado=normEst(o.estado);return o};
+const allDests=()=>{const m=new Map(BUILTIN.map(d=>[d.id,d]));DESTS.forEach(d=>m.set(d.id,{...m.get(d.id),...d}));return [...m.values()].sort((a,b)=>(a.ordem??99)-(b.ordem??99)||a.nome.localeCompare(b.nome))};
+const destName=id=>(allDests().find(d=>d.id===id)||{}).nome||id;
+const coDest=new Set();
+const lotesOnlyTransit=k=>{const ids=new Set(allDests().filter(d=>d.co).map(d=>d.id));return LOTES.filter(l=>l.produto===k&&l.estado==="Em trânsito"&&ids.has(l.destino)).reduce((a,l)=>a+(+l.qtd||0),0)};
+const lotesTransit=k=>melHas(k)?melEspTotal(k):lotesOnlyTransit(k);
+const transitSrc=k=>melHas(k)?"Melonn esperada":"lotes";
+const lc=n=>`hsl(${(n*61)%360} 60% 55%)`;
+const dform=$("#dform");
+function setFormEnabled(on){dform.querySelectorAll("input,button").forEach(e=>e.disabled=!on)}
+setFormEnabled(false);
+const ESTLBL={"Entregue":"Entregado a Melonn","Em trânsito":"En tránsito","Produzido":"Pendiente Despacho"};
+const PRODLBL={p:"Soma Sculp Piña",n:"Soma Sculp naranja",s:"Shaker Termo"};
+const LCOL=["#7ff5ff","#38e63c","#ffff00","#d7e5cf","#f6c1ff","#ffd27f","#bfd7ff","#ffb3b3"];
+const lcol=n=>n==null?"transparent":LCOL[(n-1)%LCOL.length];
+const tabOrder=()=>{const ds=allDests();const fixed=["eua","co","meli"];return[...fixed.map(id=>ds.find(d=>d.id===id)).filter(Boolean),...ds.filter(d=>!fixed.includes(d.id))]};
+function renderDests(){
+  const tabs=tabOrder();
+  $("#destbar").innerHTML=tabs.map(d=>{const n=LOTES.filter(l=>l.destino===d.id).length;const custom=!BUILTIN.some(b=>b.id===d.id);
+    return `<button data-d="${d.id}" class="${curDest===d.id?"on":""}">${d.nome}${custom&&!n&&LWRITE!==false?`<span class="x" data-rm="${d.id}" title="Remover aba">×</span>`:""}</button>`}).join("")+`<button data-d="geral" class="${curDest==="geral"?"on":""}"><b>SOMA GERAL</b></button>`;
+}
+function renderLotes(){
+  renderDests();
+  {const n=LOTES.filter(l=>l.estado==="Produzido").length;$("#nb-lot").textContent=n?String(n):""}
+  const geral=curDest==="geral";
+  const rows=LOTES.filter(l=>geral||l.destino===curDest);
+  const sum=(f,arr=rows)=>arr.filter(f).reduce((a,l)=>a+(+l.qtd||0),0);
+  // ---- totais por referência ----
+  const lines=[];
+  if(geral){["p","n","s"].forEach(k=>lines.push([PRODLBL[k],l=>l.produto===k&&l.destino!=="eua"]));lines.push(["SOMA USA",l=>l.destino==="eua"])}
+  else ["p","n","s"].forEach(k=>lines.push([PRODLBL[k],l=>l.produto===k]));
+  const cell=f=>["Entregue","Em trânsito","Produzido"].map(e=>sum(l=>f(l)&&l.estado===e));
+  const body=lines.map(([n,f])=>{const c=cell(f);const t=c[0]+c[1]+c[2];return t?`<tr><td>${n}</td><td class="num">${fmt(c[0])}</td><td class="num">${fmt(c[1])}</td><td class="num">${fmt(c[2])}</td><td class="num"><b>${fmt(t)}</b></td></tr>`:""}).join("");
+  const T=cell(()=>true);
+  $("#ltot").innerHTML=`<tr><th>${geral?"SOMA GERAL — produzido / enviado":tabOrder().find(d=>d.id===curDest)?.nome||""} por referência</th><th>Entregado</th><th>En tránsito</th><th>Pendiente</th><th>Total</th></tr>${body}<tr class="tot"><td>Total general</td><td class="num">${fmt(T[0])}</td><td class="num">${fmt(T[1])}</td><td class="num">${fmt(T[2])}</td><td class="num">${fmt(T[0]+T[1]+T[2])}</td></tr>`;
+  // ---- total por lote ----
+  {const lots=[...new Set(rows.map(l=>l.lote??null))].sort((a,b)=>(a??1e9)-(b??1e9));
+   const cols=geral?[["p",l=>l.produto==="p"&&l.destino!=="eua"],["n",l=>l.produto==="n"&&l.destino!=="eua"],["s",l=>l.produto==="s"&&l.destino!=="eua"],["usa",l=>l.destino==="eua"]]:[["p",l=>l.produto==="p"],["n",l=>l.produto==="n"],["s",l=>l.produto==="s"]];
+   const name={p:"Piña",n:"Naranja",s:"Shaker",usa:"SOMA USA"};
+   $("#llot").innerHTML=`<tr><th>Total por lote</th>${cols.map(([k])=>`<th>${name[k]}</th>`).join("")}<th>Total</th><th>Despachos</th><th>Período</th></tr>`+lots.map(L=>{const r=rows.filter(l=>(l.lote??null)===L);const vals=cols.map(([,f])=>sum(f,r));const ds=r.map(l=>l.fecha).filter(Boolean).sort();
+     return `<tr><td><span class="sw" style="background:${lcol(L)}"></span>${L==null?"sem nº":"Lote "+L}</td>${vals.map(v=>`<td class="num">${fmt(v)}</td>`).join("")}<td class="num"><b>${fmt(vals.reduce((a,v)=>a+v,0))}</b></td><td class="num">${r.length}</td><td class="num">${ds.length?dm(ds[0])+(ds.length>1?" → "+dm(ds[ds.length-1]):""):"—"}</td></tr>`}).join("")+
+     `<tr class="tot"><td>Total</td>${cols.map(([,f])=>`<td class="num">${fmt(sum(f))}</td>`).join("")}<td class="num">${fmt(sum(()=>true))}</td><td class="num">${rows.length}</td><td></td></tr>`;}
+  // ---- tabela linha a linha (ordem: lote crescente, depois data) ----
+  const srt=[...rows].sort((a,b)=>{const la=a.lote??1e9,lb=b.lote??1e9;return la-lb||(a.fecha||"").localeCompare(b.fecha||"")||(a.criado||"").localeCompare(b.criado||"")});
+  const dis=LWRITE===false?"disabled":"";
+  const estSel=(v,cls="est")=>`<select data-act="estado" class="${cls}" ${dis}>${Object.entries(ESTLBL).map(([k,l])=>`<option value="${k}" ${k===v?"selected":""}>${l}</option>`).join("")}</select>`;
+  const prodSel=v=>`<select data-act="produto" ${dis}>${Object.entries(PRODLBL).map(([k,l])=>`<option value="${k}" ${k===v?"selected":""}>${l}</option>`).join("")}</select>`;
+  const head=`<tr><th>Fecha Despacho</th><th>Lote</th><th>Producto</th><th>Cantidad</th><th>Pormesa de Entrega</th><th>Estado</th>${geral?"<th>Aba</th>":""}<th>Bodega</th><th>Nota</th><th></th></tr>`;
+  const trs=srt.map(l=>`<tr data-id="${l.id}" class="${l.destino==="eua"?"usa":""}" style="--lc:${lcol(l.lote)}">
+    <td class="lt"><input type="date" data-act="fecha" value="${l.fecha||""}" ${dis}></td>
+    <td class="lt num"><input type="number" min="1" step="1" data-act="lote" value="${l.lote??""}" placeholder="—" style="width:64px" ${dis}></td>
+    <td class="lt prod">${geral&&l.destino==="eua"?`<b>SOMA USA</b> <span class="note">${PRODLBL[l.produto]||""}</span>`:prodSel(l.produto)}</td>
+    <td class="lt num"><input type="number" min="1" step="1" data-act="qtd" value="${+l.qtd||0}" ${dis}></td>
+    <td><input type="date" data-act="promessa" value="${l.promessa||""}" ${dis}></td>
+    <td>${estSel(l.estado)}</td>
+    ${geral?`<td><select data-act="destino" ${dis}>${tabOrder().map(d=>`<option value="${d.id}" ${d.id===l.destino?"selected":""}>${d.nome}</option>`).join("")}</select></td>`:""}
+    <td><input class="bod" type="text" data-act="bodega" list="bodlist" value="${l.bodega||""}" placeholder="—" ${dis}></td>
+    <td><input class="nota" type="text" data-act="nota" value="${(l.nota||"").replace(/"/g,"&quot;")}" placeholder="—" ${dis}></td>
+    <td><button class="btn ghost danger" data-act="del" ${dis}>×</button></td></tr>`).join("");
+  const add=LWRITE===false?"":`<tr class="add" id="addrow">
+    <td><input type="date" id="a-fecha" value="${META.hoje}"></td>
+    <td><input type="number" id="a-lote" min="1" step="1" placeholder="nº" style="width:64px"></td>
+    <td class="${geral?"stack":""}">${geral?`<select id="a-dest">${tabOrder().map(d=>`<option value="${d.id}">${d.nome}</option>`).join("")}</select>`:""}<select id="a-prod">${Object.entries(PRODLBL).map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select></td>
+    <td><input type="number" id="a-qtd" min="1" step="1" placeholder="0"></td>
+    <td><input type="date" id="a-prom"></td>
+    <td><select id="a-est" class="est">${Object.entries(ESTLBL).map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select></td>
+    ${geral?"<td></td>":""}
+    <td><input class="bod" type="text" id="a-bod" list="bodlist" placeholder="Bogotá, Medellín…"></td>
+    <td><input class="nota" type="text" id="a-nota" placeholder="opcional"></td>
+    <td><button class="btn" id="a-add" type="button">Adicionar</button></td></tr>`;
+  $("#ltab").innerHTML=head+(trs||`<tr><td colspan="${geral?10:9}" class="empty">Nenhum despacho nesta aba ainda. Preencha a linha abaixo.</td></tr>`)+add+`<datalist id="bodlist"><option>Bogotá</option><option>Medellín</option><option>Cali</option><option>Barranquilla</option><option>EUA</option><option>Farmarun</option></datalist>`;
+  $("#lnote").textContent=geral?"SOMA GERAL = todas as abas. Cor da linha = número do lote. Linhas sem lote ficam no fim.":`Só ${tabOrder().find(d=>d.id===curDest)?.nome||""}. ${allDests().find(d=>d.id===curDest)?.co?"“En tránsito” aqui entra na base de ruptura.":"Esta aba não afeta o estoque da Colômbia."}`;
+  const ab=$("#a-add");if(ab)ab.onclick=addLote;
+  ["a-qtd","a-nota","a-bod"].forEach(id=>$("#"+id)?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addLote()}}));
+}
+async function addLote(){if(!LREF)return;const d={destino:curDest==="geral"?$("#a-dest").value:curDest,fecha:$("#a-fecha").value,lote:+$("#a-lote").value||null,produto:$("#a-prod").value,qtd:+$("#a-qtd").value,promessa:$("#a-prom").value||null,estado:$("#a-est").value,bodega:$("#a-bod").value.trim()||null,nota:$("#a-nota").value.trim()||null,criado:new Date().toISOString()};
+  if(!d.fecha||!d.qtd){$("#lotes-st").textContent="Informe data e quantidade.";return}
+  const btn=$("#a-add");btn.disabled=true;try{await LREF.add(d);$("#lotes-st").textContent=`Lote ${d.lote??"s/nº"} · ${PRODLBL[d.produto]} · ${fmt(d.qtd)} un. → ${destName(d.destino)} adicionado.`}catch(err){$("#lotes-st").textContent="Não foi possível salvar: "+(err.message||err.code);btn.disabled=false}}
+renderLotes();
+$("#destbar").addEventListener("click",async e=>{const x=e.target.closest("[data-rm]");if(x&&DREF){e.stopPropagation();try{await DREF.doc(x.dataset.rm).delete()}catch(err){$("#lotes-st").textContent="Não foi possível remover: "+(err.message||err.code)}return}
+  const b=e.target.closest("button[data-d]");if(!b)return;curDest=b.dataset.d;try{localStorage.setItem("ruptura-dest",curDest)}catch(_){}renderLotes()});
+try{curDest=localStorage.getItem("ruptura-dest")||"co"}catch(_){}
+dform.addEventListener("submit",async e=>{e.preventDefault();if(!DREF)return;const nome=$("#d-nome").value.trim();if(!nome)return;
+  const id="d-"+nome.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30)+"-"+Date.now().toString(36).slice(-4);
+  try{await DREF.doc(id).set({nome,co:$("#d-co").checked,ordem:10+DESTS.length,criado:new Date().toISOString()});$("#d-nome").value="";$("#d-co").checked=false;curDest=id;$("#lotes-st").textContent=`Aba “${nome}” criada.`}
+  catch(err){$("#lotes-st").textContent="Não foi possível criar: "+(err.message||err.code)}});
+$("#ltab").addEventListener("change",async e=>{const el=e.target.closest("[data-act]");if(!el||!LREF)return;const act=el.dataset.act;const tr=el.closest("tr");if(!tr?.dataset.id)return;
+  const id=tr.dataset.id;let patch;const v=el.value;
+  if(act==="estado"||act==="destino"||act==="produto")patch={[act]:v};else if(act==="lote")patch={lote:v===""?null:+v};else if(act==="qtd"){if(!(+v>0))return;patch={qtd:+v}}else if(act==="fecha"){if(!v)return;patch={fecha:v}}else if(act==="promessa")patch={promessa:v||null};else if(act==="bodega"||act==="nota")patch={[act]:v.trim()||null};else return;
+  el.disabled=true;try{await LREF.doc(id).update({...patch,atualizado:new Date().toISOString()})}catch(err){$("#lotes-st").textContent="Não foi possível salvar: "+(err.message||err.code);}el.disabled=false});
+$("#ltab").addEventListener("click",async e=>{const b=e.target.closest("button[data-act=del]");if(!b||!LREF)return;
+  if(b.dataset.arm!=="1"){b.dataset.arm="1";b.textContent="excluir?";setTimeout(()=>{b.dataset.arm="";b.textContent="×"},4000);return}
+  const id=b.closest("tr").dataset.id;b.disabled=true;try{await LREF.doc(id).delete()}catch(err){$("#lotes-st").textContent="Não foi possível excluir: "+(err.message||err.code);b.disabled=false}});
+(async()=>{
+  const db=await (window.claude?.use?.("db")??Promise.resolve(null));
+  if(!db){$("#lotes-st").textContent="Lotes indisponíveis nesta visualização (entre na sua conta claude.ai para ver e lançar lotes).";return}
+  const user=await (window.claude?.use?.("user")??Promise.resolve(null));
+  LWRITE=user?await user.can("data.write"):null;
+  LREF=db.collection("lotes");DREF=db.collection("destinos");MREF=db.collection("melonn");
+  if(LWRITE!==false){setFormEnabled(true);$("#mel-file").disabled=false}
+  BREF=db.collection("bolsas");BHREF=db.collection("bolsas_cortes");
+  BREF.limit(20).onSnapshot(snap=>{BOL={};snap.docs.forEach(d=>{const x=d.data();BOL[x.bodega||d.id]=x});renderBolsas()},err=>{$("#b-st").textContent="Conexão caiu: "+(err.message||err.code)});
+  BHREF.limit(200).onSnapshot(snap=>{BHIST=snap.docs.map(d=>d.data());renderBolsas()},()=>{});
+  MREF.limit(20).onSnapshot(snap=>{MEL={};snap.docs.forEach(d=>{const x=d.data();MEL[x.bodega||d.id]=x});renderMel();render()},err=>{$("#mel-st").textContent="Conexão caiu: "+(err.message||err.code)});
+  $("#lotes-st").textContent=LWRITE===false?"Você pode ver os lotes, mas não lançar (acesso somente leitura).":"Lotes compartilhados com toda a equipe · salvamento automático.";
+  DREF.limit(200).onSnapshot(snap=>{DESTS=snap.docs.map(d=>({id:d.id,...d.data()}));renderLotes();render()},err=>{$("#lotes-st").textContent="Conexão com destinos caiu: "+(err.message||err.code)});
+  LREF.limit(1000).onSnapshot(snap=>{LOTES=snap.docs.map(d=>normLote({id:d.id,...d.data()}));renderLotes();render()},
+    err=>{$("#lotes-st").textContent="Conexão com o banco de lotes caiu: "+(err.message||err.code)});
+})();
+
+/* ---------- faturas Melonn ---------- */
+let FECH=[],FREF=null,curF=null,ASSETS=null,DL=null;
+const SLOTS=[["f1","Fatura 1 — Medellín","imagem ou PDF da fatura"],["f2","Fatura 2 — Bogotá","imagem ou PDF da fatura"],["x1","Excel de cargos — Medellín","xlsx exportado da Melonn"],["x2","Excel de cargos — Bogotá","xlsx exportado da Melonn"],["so","sell_orders (Melonn)","xlsx de pedidos do mês"],["ot","Outros","prints do saldo, notas de crédito…"]];
+const OK_TYPES=/^(image\/(png|jpeg|gif|webp)|application\/pdf|text\/csv|application\/json|text\/plain)$/;
+const fmtCOP=v=>typeof v==="number"?(Number.isInteger(v)||Math.abs(v)>=1000?Math.round(v).toLocaleString("pt-BR"):(Math.abs(v)<1&&v!==0?(v*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":v.toLocaleString("pt-BR",{maximumFractionDigits:1}))):(v??"");
+const CUR={COP:{s:"COP",d:0},BRL:{s:"R$",d:2},USD:{s:"US$",d:2}};
+let showCur="COP";try{showCur=localStorage.getItem("ruptura-cur")||"COP"}catch(_){}
+const rateOf=(f,c)=>c==="COP"?1:c==="USD"?(+f.cot_usd||0):(+f.cot_brl||0);
+const conv=(f,v,c)=>{const r=rateOf(f,c);return r>0?v/r:null};
+// par a par: cada combinação tem a própria cotação informada
+const PAIR={"COP>USD":f=>(+f.cot_usd||0)?1/(+f.cot_usd):0,"USD>COP":f=>+f.cot_usd||0,"COP>BRL":f=>(+f.cot_brl||0)?1/(+f.cot_brl):0,"BRL>COP":f=>+f.cot_brl||0,"USD>BRL":f=>+f.cot_usdbrl||0,"BRL>USD":f=>(+f.cot_usdbrl||0)?1/(+f.cot_usdbrl):0};
+const convPair=(f,v,from,to)=>{if(from===to)return v;const r=PAIR[from+">"+to](f);return r>0?v*r:null};
+const money=(v,c)=>v==null?"—":CUR[c].s+" "+v.toLocaleString("pt-BR",{minimumFractionDigits:CUR[c].d,maximumFractionDigits:CUR[c].d});
+const fname=f=>f.nome||`Faturas ${dm(f.periodo_ini)} → ${dm(f.periodo_fim)}`+(f.provisao_mes?` · provisão ${f.provisao_mes.split("-").reverse().join("/")}`:"");
+function fstatus(f){if(f.relatorio)return["good","Relatório publicado"];if(f.status==="pronto")return["warn","Pronto para fechar — peça no chat"];const n=Object.values(f.arquivos||{}).reduce((a,x)=>a+(x||[]).length,0);return n?["warn",`${n} arquivo(s) enviado(s)`]:["","Aguardando arquivos"]}
+function renderFat(){
+  {const n=FECH.filter(f=>f.status==="pronto"&&!f.relatorio).length;$("#nb-fat").textContent=n?String(n):""}
+  const sel=$("#f-sel");const list=[...FECH].sort((a,b)=>(b.periodo_fim||"").localeCompare(a.periodo_fim||""));
+  sel.innerHTML=list.map(f=>`<option value="${f.id}">${fname(f)}</option>`).join("")||`<option value="">— nenhum fechamento —</option>`;
+  if(!list.some(f=>f.id===curF))curF=list[0]?.id||null;sel.value=curF||"";
+  const body=$("#fat-body");const f=list.find(x=>x.id===curF);
+  if(!f){body.innerHTML=`<div class="empty">Nenhum fechamento criado. Informe o ciclo das faturas e o mês da provisão acima.</div>`;return}
+  const[sc,st]=fstatus(f);const dis=LWRITE===false?"disabled":"";
+  let h=`<div class="fhead"><span class="pill ${sc}">${st}</span><span class="note">Ciclo ${dm(f.periodo_ini)} → ${dm(f.periodo_fim)}/${f.periodo_fim.slice(0,4)} · provisão ${f.provisao_mes||"—"}</span>
+    <label class="chk">Saldo da plataforma Melonn (COP) <input type="number" id="f-saldo" value="${f.saldo_plataforma??""}" style="width:150px" ${dis}></label>
+    ${f.relatorio?"":`<button class="btn ghost" id="f-pronto" ${dis}>${f.status==="pronto"?"Reabrir":"Marcar como pronto para fechar"}</button>`}
+    ${f.xlsx_asset?`<button class="btn ghost" id="f-dl">Baixar Excel completo</button>`:""}
+    <button class="btn ghost danger" id="f-del" ${dis}>Excluir fechamento</button></div>`;
+  h+=`<details ${f.relatorio?"":"open"}><summary>Arquivos do fechamento</summary><div class="slots" style="margin-top:8px">`+SLOTS.map(([k,t,d])=>{const arr=(f.arquivos||{})[k]||[];
+    return `<div class="slot"><div class="eyebrow">${t}</div><div class="note">${d}</div><div class="files">${arr.map((a,i)=>`<div><a href="/_blob/${a.id}" target="_blank" rel="noopener" title="${a.nome}">${a.nome}</a><span class="note">${(a.tam/1048576).toFixed(1)} MB</span><button class="btn ghost danger" data-rmf="${k}:${i}" ${dis}>×</button></div>`).join("")}</div>
+      <input type="file" multiple data-slot="${k}" ${ASSETS&&LWRITE!==false?"":"disabled"}></div>`}).join("")+`</div>${ASSETS?"":'<div class="note">Upload disponível para Contribuidores com login claude.ai.</div>'}</details>`;
+  // cotações + moeda de exibição
+  const cu=+f.cot_usd||0,cb=+f.cot_brl||0,cx=+f.cot_usdbrl||0;const okCur=c=>c==="COP"||rateOf(f,c)>0;if(!okCur(showCur))showCur="COP";
+  const implied=cu&&cb?cu/cb:0;const gap=implied&&cx?Math.abs(cx-implied)/implied:0;
+  h+=`<div class="fx"><span class="eyebrow">Cotações deste fechamento (3 pares)</span>
+    <label>COP → USD · 1 USD = <input type="number" id="fx-usd" step="0.01" min="0" value="${cu||""}" placeholder="ex.: 4.100" ${dis}> COP</label>
+    <label>COP → BRL · 1 BRL = <input type="number" id="fx-brl" step="0.01" min="0" value="${cb||""}" placeholder="ex.: 760" ${dis}> COP</label>
+    <label>BRL → USD · 1 USD = <input type="number" id="fx-usdbrl" step="0.0001" min="0" value="${cx||""}" placeholder="ex.: 5,40" ${dis}> BRL</label>
+    <span class="note">${implied?`cruzada implícita pelas duas primeiras: 1 USD = R$ ${implied.toLocaleString("pt-BR",{maximumFractionDigits:4})}${gap>0.01?` · <b>difere ${(gap*100).toFixed(1)}% da informada</b>`:""}`:"Preencha as cotações para liberar BRL e USD."}</span>
+    <span class="seg" id="fx-seg">${["COP","BRL","USD"].map(c=>`<button data-cur="${c}" class="${showCur===c?"on":""}" ${okCur(c)?"":"disabled"}>${c}</button>`).join("")}</span></div>`;
+  h+=`<div class="conv"><span class="eyebrow">Conversor</span><input type="number" id="cv-val" step="0.01" placeholder="valor" style="width:140px"><select id="cv-from"><option>COP</option><option>BRL</option><option>USD</option></select><span>→</span><span class="out" id="cv-out">—</span></div>`;
+  const PAIRS=[["COP","USD"],["COP","BRL"],["BRL","USD"]];
+  h+=`<div class="tbl"><table><tr><th>Par</th><th>Cotação informada</th><th>Inversa</th><th>Exemplo: 1.000.000 COP / 1.000 BRL / 1.000 USD</th></tr>${PAIRS.map(([a,b])=>{const r=PAIR[a+">"+b](f),ri=PAIR[b+">"+a](f);const ex=a==="COP"?1e6:1000;return `<tr><td>${a} → ${b}</td><td class="num">${r?`1 ${a} = ${r.toLocaleString("pt-BR",{maximumFractionDigits:6})} ${b}`:"—"}</td><td class="num">${ri?`1 ${b} = ${ri.toLocaleString("pt-BR",{maximumFractionDigits:4})} ${a}`:"—"}</td><td class="num">${r?`${money(ex,a)} = ${money(convPair(f,ex,a,b),b)} · ${money(1000,b)} = ${money(convPair(f,1000,b,a),a)}`:"informe a cotação"}</td></tr>`}).join("")}</table></div>`;
+  if(f.relatorio){const r=f.relatorio,k=r.kpis||{};const M=v=>typeof v==="number"?money(conv(f,v,showCur),showCur):"—";
+    h+=`<div class="kpis">${[["Total a pagar à Melonn",M(k.total_pagar),"com IVA, menos retenções"],["Total das faturas com IVA",M(k.total_com_iva),`IVA ${M(k.iva)}`],["Pedidos faturados",fmtCOP(k.pedidos),`D2C ${fmtCOP(k.d2c_pedidos)} · B2B ${fmtCOP(k.b2b_pedidos)}`],["Custo D2C por pedido (com IVA)",M(k.d2c_custo_com_iva),`frete ${M(k.d2c_frete)} · na ponta ${M(k.d2c_na_ponta)}`],["Custo B2B por pedido (com IVA)",M(k.b2b_custo_com_iva),"todos os processos + fixos"],["Provisão do mês seguinte",M(k.provisao_com_iva),`${fmtCOP(k.provisao_pedidos)} pedidos pendentes`],["Retenções na fonte",M(k.retencoes),"recolhidas à DIAN"],["Saldo da plataforma",M(k.saldo_plataforma),`dif. ${M((k.total_pagar||0)-(k.saldo_plataforma||0))}`]].map(([a,b,c])=>`<div class="kpi"><div class="eyebrow">${a}</div><div class="v" style="font-size:18px">${b}</div><div class="s">${c}</div></div>`).join("")}</div>`;
+    const L=[["Subtotal das faturas (sem IVA)",k.subtotal_sem_iva],["IVA 19%",k.iva],["Total das faturas com IVA",k.total_com_iva],["Retenções na fonte",-(k.retencoes||0)],["Total a pagar à Melonn",k.total_pagar],["Saldo da plataforma Melonn",k.saldo_plataforma],["Diferença a identificar",(k.total_pagar||0)-(k.saldo_plataforma||0)],["Custo D2C por pedido — com IVA",k.d2c_custo_com_iva],["Custo D2C por pedido — na ponta",k.d2c_na_ponta],["Frete D2C por pedido",k.d2c_frete],["Custo B2B por pedido — com IVA",k.b2b_custo_com_iva],["Provisão do mês seguinte (com IVA)",k.provisao_com_iva]];
+    h+=`<details open><summary>Resumo financeiro em 3 moedas</summary><div class="tbl"><table><tr><th>Item</th><th>COP</th><th>BRL</th><th>USD</th></tr>${L.map(([a,v])=>`<tr><td>${a}</td><td class="num">${money(v,"COP")}</td><td class="num">${money(conv(f,v,"BRL"),"BRL")}</td><td class="num">${money(conv(f,v,"USD"),"USD")}</td></tr>`).join("")}</table></div><div class="note">Valores de origem em COP, convertidos pelos pares COP → BRL e COP → USD informados. O par BRL → USD é usado no conversor e para conferir a cruzada. As abas detalhadas abaixo permanecem em COP, como na fatura.</div></details>`;
+    h+=(r.blocos||[]).map((b,i)=>{const w=Math.max(...b.rows.map(x=>x.length));
+      return `<details ${i===0?"open":""}><summary>${b.aba}</summary><div class="tbl"><table>${b.rows.map(row=>{const isSec=row.length>1&&typeof row[0]==="string"&&(/^\d\.|^[A-ZÀ-Ú0-9 —–\-()/%:]{12,}$/.test(row[0])||row.slice(1).every(c=>typeof c!=="number"));const isTot=typeof row[0]==="string"&&/^(TOTAL|SUBTOTAL|CUSTO|VALOR|PROVISÃO|Total geral)/.test(row[0]);
+        return `<tr class="${isSec?"sec":isTot?"tot":""}">${Array.from({length:w},(_,j)=>{const c=row[j];const last=j===w-1&&typeof c==="string"&&c.length>30;return `<td class="${typeof c==="number"?"num":last?"ex":""}" style="${j===0?"text-align:left":""}">${c==null?"":fmtCOP(c)}</td>`}).join("")}</tr>`}).join("")}</table></div></details>`}).join("");
+    h+=`<div class="note">Relatório gerado em ${r.gerado||"—"}. Abas de detalhe pedido a pedido estão no Excel completo.</div>`}
+  else h+=`<div class="empty">Relatório ainda não gerado para este fechamento. Suba os arquivos, marque como pronto e peça no chat: <b>fecha as faturas de ${f.provisao_mes||"…"}</b>.</div>`;
+  body.innerHTML=h;
+  ["usd","brl","usdbrl"].forEach(c=>$("#fx-"+c)?.addEventListener("change",async e=>{try{await FREF.doc(f.id).update({["cot_"+c]:+e.target.value||null})}catch(err){$("#fat-st").textContent="Erro ao salvar cotação: "+(err.message||err.code)}}));
+  $("#fx-seg")?.addEventListener("click",e=>{const b=e.target.closest("button[data-cur]");if(!b||b.disabled)return;showCur=b.dataset.cur;try{localStorage.setItem("ruptura-cur",showCur)}catch(_){}renderFat()});
+  const cvRun=()=>{const v=+$("#cv-val").value,from=$("#cv-from").value;const o=$("#cv-out");if(!v){o.textContent="—";return}
+    o.textContent=["COP","BRL","USD"].filter(c=>c!==from).map(c=>{const x=convPair(f,v,from,c);return x==null?`${c}: informe a cotação ${from} → ${c}`:money(x,c)}).join("   ·   ")};
+  $("#cv-val")?.addEventListener("input",cvRun);$("#cv-from")?.addEventListener("change",cvRun);
+  $("#f-saldo")?.addEventListener("change",async e=>{try{await FREF.doc(f.id).update({saldo_plataforma:+e.target.value||null})}catch(err){$("#fat-st").textContent="Erro ao salvar saldo: "+(err.message||err.code)}});
+  $("#f-pronto")?.addEventListener("click",async()=>{try{await FREF.doc(f.id).update({status:f.status==="pronto"?"aguardando":"pronto"})}catch(err){$("#fat-st").textContent="Erro: "+(err.message||err.code)}});
+  $("#f-del")?.addEventListener("click",async e=>{const b=e.currentTarget;if(b.dataset.arm!=="1"){b.dataset.arm="1";b.textContent="Confirmar exclusão do fechamento";setTimeout(()=>{b.dataset.arm="";b.textContent="Excluir fechamento"},4000);return}try{await FREF.doc(f.id).delete()}catch(err){$("#fat-st").textContent="Erro: "+(err.message||err.code)}});
+  $("#f-dl")?.addEventListener("click",async e=>{const b=e.currentTarget;b.disabled=true;b.textContent="Preparando…";try{const j=await (await fetch("/_blob/"+f.xlsx_asset)).json();const bin=atob(j.b64);const u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+      if(DL)await DL.save({filename:j.nome,data:u8});else $("#fat-st").textContent="Download indisponível nesta visualização."}catch(err){$("#fat-st").textContent="Erro no download: "+(err.message||err.code)}b.disabled=false;b.textContent="Baixar Excel completo"});
+  body.querySelectorAll("input[type=file][data-slot]").forEach(inp=>inp.addEventListener("change",async()=>{const k=inp.dataset.slot;const files=[...inp.files];if(!files.length||!ASSETS)return;inp.disabled=true;$("#fat-st").textContent=`Enviando ${files.length} arquivo(s)…`;
+    const added=[];for(const file of files){try{let res;if(OK_TYPES.test(file.type)){res=await ASSETS.upload(file)}else{const b64=await new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(r.result.split(",")[1]);r.onerror=ko;r.readAsDataURL(file)});
+        res=await ASSETS.upload(new Blob([JSON.stringify({nome:file.name,tipo:file.type||"application/octet-stream",b64})],{type:"application/json"}),{type:"application/json"})}
+        added.push({id:res.id,nome:file.name,tipo:file.type||"",tam:file.size,wrapped:!OK_TYPES.test(file.type),em:new Date().toISOString()})}
+      catch(err){$("#fat-st").textContent=`Falha ao enviar ${file.name}: ${err.message||err.code}`}}
+    if(added.length){const cur=FECH.find(x=>x.id===f.id)||f;const arq={...(cur.arquivos||{})};arq[k]=[...(arq[k]||[]),...added];try{await FREF.doc(f.id).update({arquivos:arq,status:cur.status==="pronto"?"pronto":"aguardando"});$("#fat-st").textContent=`${added.length} arquivo(s) salvo(s).`}catch(err){$("#fat-st").textContent="Arquivo enviado mas não registrado: "+(err.message||err.code)}}
+    inp.disabled=false}));
+  body.querySelectorAll("button[data-rmf]").forEach(b=>b.addEventListener("click",async()=>{const[k,i]=b.dataset.rmf.split(":");const cur=FECH.find(x=>x.id===f.id)||f;const arq={...(cur.arquivos||{})};const [a]=(arq[k]||[]).splice(+i,1);arq[k]=[...(arq[k]||[])];b.disabled=true;
+    try{await FREF.doc(f.id).update({arquivos:arq});if(ASSETS&&a){try{await ASSETS.delete(a.id)}catch(_){}}}catch(err){$("#fat-st").textContent="Erro ao remover: "+(err.message||err.code);b.disabled=false}}));
+}
+$("#f-sel").addEventListener("change",e=>{curF=e.target.value;renderFat()});
+$("#fnew").addEventListener("submit",async e=>{e.preventDefault();if(!FREF)return;const ini=$("#f-ini").value,fim=$("#f-fim").value,prov=$("#f-prov").value;if(!ini||!fim)return;
+  try{const ref=await FREF.add({periodo_ini:ini,periodo_fim:fim,provisao_mes:prov||null,status:"aguardando",arquivos:{},criado:new Date().toISOString()});curF=ref.id;$("#fat-st").textContent="Fechamento criado."}catch(err){$("#fat-st").textContent="Erro ao criar: "+(err.message||err.code)}});
+(async()=>{
+  const db=await (window.claude?.use?.("db")??Promise.resolve(null));
+  if(!db){$("#fat-st").textContent="Indisponível nesta visualização (entre na sua conta claude.ai).";$("#fat-body").innerHTML="";return}
+  ASSETS=await (window.claude?.use?.("assets")??Promise.resolve(null));
+  DL=await (window.claude?.use?.("downloads")??Promise.resolve(null));
+  FREF=db.collection("fechamentos");
+  $("#fat-st").textContent="Arquivos e relatórios compartilhados com a equipe.";
+  FREF.limit(100).onSnapshot(snap=>{FECH=snap.docs.map(d=>({id:d.id,...d.data()}));renderFat()},err=>{$("#fat-st").textContent="Conexão caiu: "+(err.message||err.code)});
+})();
+
+/* ---------- bolsas ---------- */
+let BOL={},BREF=null,BHREF=null,BHIST=[];
+const bolDays=b=>{const t=BOL[b]?.lido_em;if(!t)return 0;return Math.max(0,(HOJE-new Date(new Date(t).toDateString()))/864e5)};
+function bolsasDemand(k,scope){ // k: "peq"|"gr"; scope: bodega or null (total). devolve un/dia
+  if(!PER)return 0;const{avg,ord}=PER;const upo=(avg.p+avg.n)/(avg.o||1);
+  if(!scope){return k==="gr"?avg.s:Math.max(0,avg.o-avg.s)}
+  const Ds=demandByBod("s")[scope]||0;const Dp=(demandByBod("p")[scope]||0)+(demandByBod("n")[scope]||0);const ordB=upo>0?Dp/upo:0;
+  return k==="gr"?Ds:Math.max(0,ordB-Ds)}
+function renderBolsas(){
+  if(!PER)return;const{avg,W}=PER;const bods=Object.keys(BOL);if(typeof renderCedi==="function")renderCedi();const box=$("#bolsas");
+  if(!bods.length){box.innerHTML=`<div class="empty">Sem corte lançado. Use “Lançar corte da Melonn” abaixo.</div>`;$("#dbolsas").innerHTML="";return}
+  const tot=k=>bods.reduce((a,b)=>a+(+BOL[b][k]||0),0);
+  const lido=bods.map(b=>BOL[b].lido_em).sort().at(-1);
+  const cards=[["peq","Bolsa pequena","1 unidade por pedido"],["gr","Bolsa grande","2+ unidades (com shaker)"]].map(([k,nome,sub])=>{
+    const st=tot(k),esp=tot("esp_"+k);const rate=bolsasDemand(k);const used=Math.round(rate*bolDays(bods[0]));const proj=Math.max(0,st-used);const base=proj+esp;
+    const scen=[["Mínimo",k==="gr"?W.s.min:Math.max(0,W.o.min-W.s.min)],["Média",rate],["Pico",k==="gr"?W.s.pico:Math.max(0,W.o.pico-W.s.pico)]];
+    const cls=d=>d<=3?"crit":d<=7?"warn":"good";const dm_=rate>0?base/rate:Infinity;
+    return `<div class="rcard"><div class="top"><h2>${nome}</h2><span class="pill ${cls(dm_)}">${isFinite(dm_)?f1(dm_)+" dias (média)":"—"}</span></div>
+      <div class="stock"><span>Corte Melonn (${lido?dm(lido.slice(0,10)):"—"})</span><span class="num">${fmt(st)}</span>
+        <span>Consumo estimado desde o corte</span><span class="num">−${fmt(used)}</span>
+        <span>Saldo projetado hoje</span><span class="num">${fmt(proj)}</span>
+        <span>A chegar</span><span class="num">${fmt(esp)}</span>
+        <span><b>Base para ruptura</b></span><span class="num"><b>${fmt(base)}</b></span></div>
+      <div class="note">${sub} · ${bods.map(b=>`${b} ${fmt(+BOL[b][k]||0)}`).join(" · ")}</div>
+      <div class="scen">${scen.map(([l,r])=>{const d=r>0?base/r:Infinity;const dt=isFinite(d)?addD(HOJE,Math.floor(d)):null;return `<span class="lab">${l}</span><span class="rate">${fmt(r)}/dia · ${isFinite(d)?f1(d)+" d":"—"}</span><span class="date ${isFinite(d)?cls(d):""}">${dt?(Math.floor(d)===0?"HOJE":WD[dt.getDay()]+" "+dm(iso(dt))):"—"}</span>`}).join("")}</div></div>`}).join("");
+  box.innerHTML=cards;
+  // por bodega (aba Distribuição)
+  const act=activeBods();
+  $("#dbolsas").innerHTML=[["peq","Bolsa pequena"],["gr","Bolsa grande"]].map(([k,nome])=>`<div class="dcard"><div class="top"><h2>${nome}</h2><span class="note">${fmt(bolsasDemand(k))} /dia</span></div>
+    <div class="tbl"><table class="dtab"><tr><th>CEDI</th><th>Corte</th><th>A chegar</th><th>Un./dia</th><th>Cobertura</th></tr>${act.map(b=>{const o=BOL[b]||{};const st=Math.max(0,(+o[k]||0)-Math.round(bolsasDemand(k,b)*bolDays(b)))+(+o["esp_"+k]||0);const r=bolsasDemand(k,b);const c=r>0?st/r:Infinity;const cls=c<=3?"crit":c<=7?"warn":"good";
+      return `<tr><td>${b}</td><td class="num">${fmt(+o[k]||0)}</td><td class="num">${o["esp_"+k]?"+"+fmt(o["esp_"+k]):"—"}</td><td class="num">${fmt(r)}</td><td class="num ${cls}">${isFinite(c)?f1(c)+" d":"—"}</td></tr>`}).join("")}</table></div></div>`).join("");
+  // histórico
+  $("#b-hist").innerHTML=`<tr><th>Corte</th><th>Bogotá peq/gr</th><th>Medellín peq/gr</th><th>Cali peq/gr</th><th>Barranquilla peq/gr</th></tr>`+[...BHIST].sort((a,b)=>b.data.localeCompare(a.data)).map(h=>`<tr><td>${dmw(h.data)}</td>${["bogota","medellin","cali","barranquilla"].map(x=>`<td class="num">${h[x]?fmt(h[x].peq||0)+" / "+fmt(h[x].gr||0):"—"}</td>`).join("")}</tr>`).join("");
+}
+$("#b-save").addEventListener("click",async()=>{if(!BREF)return;const b=$("#b-bod").value,id=b.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();const peq=+$("#b-peq").value||0,gr=+$("#b-gr").value||0,ep=+$("#b-epeq").value||0,eg=+$("#b-egr").value||0;
+  if(!$("#b-peq").value&&!$("#b-gr").value){$("#b-st").textContent="Informe pequena e grande.";return}
+  try{await BREF.doc(id).set({bodega:b,peq,gr,esp_peq:ep,esp_gr:eg,lido_em:new Date().toISOString(),fonte:"lançamento manual"});
+    const d=iso(new Date());const h=BHIST.find(x=>x.data===d)||{data:d};await BHREF.doc(d).set({...h,[id]:{peq,gr,esp_peq:ep,esp_gr:eg}});$("#b-st").textContent=`Corte de ${b} salvo.`}catch(err){$("#b-st").textContent="Erro: "+(err.message||err.code)}});
+
+/* ---------- ruptura por CEDI ---------- */
+function cediShare(){ // fatia de pedidos por CEDI (mix regional 30d, roteamento geográfico)
+  const w={};let tot=0;for(const[reg,v]of Object.entries(DIST.d30)){const u=(v.p||0)+(v.n||0)+(v.s||0);tot+=u;const sh=shareRegion(reg);for(const b of BODS)w[b]=(w[b]||0)+u*sh[b]}
+  const out={};BODS.forEach(b=>out[b]=tot?(w[b]||0)/tot:0);return out}
+function renderCedi(){
+  if(!PER)return;const{avg,W}=PER;const act=activeBods();const sh=cediShare();
+  const cls=d=>d<=3?"crit":d<=7?"warn":"good";const dtxt=d=>!isFinite(d)?"—":d<1?"HOJE":WD[addD(HOJE,Math.floor(d)).getDay()]+" "+dm(iso(addD(HOJE,Math.floor(d))));
+  const alerts=[];const blocks=act.map(b=>{
+    const f=sh[b]||0;const rows=[];
+    SK.forEach(([k,nome])=>{const st=STOCK[k].bod[b]||[0,0];const tr=MEL[b]?melEsp(k,b):LOTES.filter(l=>l.produto===k&&l.estado==="Em trânsito"&&bodOfLote(l)===b&&allDests().find(d=>d.id===l.destino)?.co).reduce((a,l)=>a+(+l.qtd||0),0);
+      const base=st[0]+tr;const r={min:W[k].min*f,med:avg[k]*f,pico:W[k].pico*f};const d=Object.fromEntries(Object.entries(r).map(([x,v])=>[x,v>0?base/v:Infinity]));
+      rows.push({nome:STOCK[k].nome,sw:k,disp:st[0],comp:st[1],tr,base,r,d});if(isFinite(d.med)&&d.med<=3)alerts.push([b,STOCK[k].nome,d.med])});
+    const bo=BOL[b]||{};[["peq","Bolsa pequena"],["gr","Bolsa grande"]].forEach(([k,nome])=>{const corte=+bo[k]||0;const esp=+bo["esp_"+k]||0;const rate=bolsasDemand(k,b);const used=Math.round(rate*bolDays(b));const base=Math.max(0,corte-used)+esp;
+      const r={min:(k==="gr"?W.s.min:Math.max(0,W.o.min-W.s.min))*f,med:rate,pico:(k==="gr"?W.s.pico:Math.max(0,W.o.pico-W.s.pico))*f};const d=Object.fromEntries(Object.entries(r).map(([x,v])=>[x,v>0?base/v:Infinity]));
+      rows.push({nome,bag:true,disp:corte,comp:used,tr:esp,base,r,d});if(Object.keys(bo).length&&isFinite(d.med)&&d.med<=3)alerts.push([b,nome,d.med])});
+    const worst=rows.filter(x=>isFinite(x.d.med)).sort((a,c)=>a.d.med-c.d.med)[0];
+    return {b,f,rows,worst,html:`<section class="card"><div class="sec-h"><h2>${b}</h2><p>${Math.round(f*100)}% dos pedidos · ${fmt(avg.o*f)} pedidos/dia no período${worst?` · mais urgente: <b>${worst.nome}</b> ${dtxt(worst.d.med)}`:""}</p></div>
+      <div class="tbl"><table class="ctab"><tr><th>Item</th><th>Disponível</th><th>Compr.</th><th>Trânsito</th><th>Base</th><th>Un./dia (média)</th><th>Mínimo</th><th>Média</th><th>Pico</th></tr>
+      ${rows.map(x=>`<tr><td>${x.sw?`<span class="sw ${x.sw}"></span>`:""}${x.nome}${x.bag?' <span class="note">corte Melonn</span>':""}</td><td class="num">${fmt(x.disp)}</td><td class="num">${fmt(x.comp)}</td><td class="num">${x.tr?"+"+fmt(x.tr):"—"}</td><td class="num"><b>${fmt(x.base)}</b></td><td class="num">${fmt(x.r.med)}</td>${["min","med","pico"].map(y=>`<td class="d ${isFinite(x.d[y])?cls(x.d[y]):""}" title="${isFinite(x.d[y])?f1(x.d[y])+" dias":""}">${dtxt(x.d[y])}</td>`).join("")}</tr>`).join("")}</table></div></section>`}});
+  $("#cedi-blocks").innerHTML=blocks.map(x=>x.html).join("");
+  alerts.sort((a,b)=>a[2]-b[2]);$("#cedi-alerts").innerHTML=alerts.map(([b,n,d])=>`<div class="alert crit"><span class="dot"></span><span><b>${b}</b> · ${n}: ${d<1?"rompe HOJE":`${f1(d)} dias`} no ritmo médio</span></div>`).join("");
+  $("#nb-cedi").textContent=alerts.length?String(alerts.length):"";
+  // charts
+  const C={Bogotá:css("--accent"),Medellín:css("--naranja"),Cali:css("--pina"),Barranquilla:css("--shaker")};const fg=css("--muted");
+  const dOpts=extra=>Object.assign({responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{position:"right",labels:{color:fg,boxWidth:10,usePointStyle:true,pointStyle:"circle"}},tooltip:{backgroundColor:css("--surface"),titleColor:css("--fg"),bodyColor:css("--fg"),borderColor:css("--line"),borderWidth:1}}},extra||{});
+  mk("cCedi",{type:"doughnut",data:{labels:act,datasets:[{data:act.map(b=>Math.round(PER.ord*(sh[b]||0))),backgroundColor:act.map(b=>C[b]),borderColor:css("--surface"),borderWidth:2}]},options:dOpts({cutout:"60%",plugins:{tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)} pedidos (${Math.round(sh[c.label]*100)}%)`}}}})});
+  const gr=Math.round(PER.ord*avg.s/(avg.o||1)),pq=PER.ord-gr;
+  mk("cBolsa",{type:"doughnut",data:{labels:["1 unidade · bolsa pequena","2+ unidades · bolsa grande"],datasets:[{data:[pq,gr],backgroundColor:[css("--muted"),css("--accent")],borderColor:css("--surface"),borderWidth:2}]},options:dOpts({cutout:"60%",plugins:{tooltip:{callbacks:{label:c=>` ${fmt(c.parsed)} pedidos (${Math.round(c.parsed/PER.ord*100)}%)`}}}})});
+  mk("cMix",{type:"bar",data:{labels:act,datasets:[{label:"Piña",data:act.map(b=>Math.round(avg.p*sh[b]*PER.n)),backgroundColor:css("--pina"),borderRadius:3},{label:"Naranja",data:act.map(b=>Math.round(avg.n*sh[b]*PER.n)),backgroundColor:css("--naranja"),borderRadius:3}]},options:baseOpts({scales:{x:{stacked:true,ticks:{color:fg},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:fg,callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}}}})});
+  const regs=Object.entries(DIST.d30).map(([r,v])=>({r,u:(v.p||0)+(v.n||0)+(v.s||0)})).sort((a,b)=>b.u-a.u);const totU=regs.reduce((a,x)=>a+x.u,0);const top=regs.slice(0,12);const rest=regs.slice(12).reduce((a,x)=>a+x.u,0);
+  const labs=[...top.map(x=>x.r.replace(", D.C.","").replace("Norte de Santander","N. Santander").replace("San Andrés, Providencia y Santa Catalina","San Andrés")),"Outros"];const vals=[...top.map(x=>x.u),rest].map(u=>Math.round(PER.ord*u/totU));
+  const bodOf=r=>{const g=DIST.geo[r]||"Bogotá";return act.includes(g)?g:fallbackBod(g)};const cols=[...top.map(x=>C[bodOf(x.r)]),css("--muted")];
+  mk("cDep",{type:"bar",data:{labels:labs,datasets:[{data:vals,backgroundColor:cols,borderRadius:3,maxBarThickness:18}]},options:baseOpts({indexAxis:"y",plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.parsed.x)} pedidos`}}},scales:{x:{beginAtZero:true,ticks:{color:fg,callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}},y:{ticks:{color:css("--fg"),font:{size:10.5},autoSkip:false},grid:{display:false}}}})});
+}
+
+/* ---------- distribuição ---------- */
+const BODS=["Bogotá","Medellín","Cali","Barranquilla"];
+let dBase="d7",dRota="geo",dCali=false,dBq=false;try{const o=JSON.parse(localStorage.getItem("ruptura-dist")||"{}");dBase=o.b||"d7";dCali=!!o.c;dBq=!!o.q}catch(_){}
+const bodOfLote=l=>{const b=(l.bodega||"").toLowerCase();return b.includes("bogot")?"Bogotá":b.includes("medell")?"Medellín":b.includes("cali")?"Cali":b.includes("barranq")?"Barranquilla":null};
+const activeBods=()=>BODS.filter(b=>b==="Bogotá"||b==="Medellín"||(b==="Cali"&&dCali)||(b==="Barranquilla"&&dBq));
+const fallbackBod=g=>g==="Cali"?"Bogotá":g==="Barranquilla"?"Medellín":g;
+function shareRegion(reg){ // {Bogotá:x,Medellín:y,Cali:z} somando 1
+  if(dRota==="geo"){const g=DIST.geo[reg]||"Bogotá";const b=activeBods().includes(g)?g:fallbackBod(g);const o={};BODS.forEach(x=>o[x]=x===b?1:0);return o}
+  const r=DIST.rota[reg]||{};const t=(r.Bogotá||0)+(r.Medellín||0)||1;const o={};BODS.forEach(x=>o[x]=0);o.Bogotá=(r.Bogotá||0)/t;o.Medellín=(r.Medellín||0)/t;return o}
+function demandByBod(k){const days=dBase==="d7"?7:30;const out={};BODS.forEach(b=>out[b]=0);for(const[reg,v]of Object.entries(DIST[dBase])){const sh=shareRegion(reg);for(const b of BODS)out[b]+=(v[k]||0)*sh[b]/days}return out}
+function waterfill(S,D,Q){ // devolve alocação x_b que iguala cobertura
+  const bs=BODS.filter(b=>D[b]>0);if(!bs.length)return{};let lo=0,hi=1e5;for(let i=0;i<60;i++){const T=(lo+hi)/2;const need=bs.reduce((a,b)=>a+Math.max(0,T*D[b]-S[b]),0);if(need>Q)hi=T;else lo=T}
+  const x={};bs.forEach(b=>x[b]=Math.max(0,Math.round(lo*D[b]-S[b])));const diff=Q-Object.values(x).reduce((a,v)=>a+v,0);if(diff){const b=bs.sort((a,c)=>(S[c]+x[c])/D[c]-(S[a]+x[a])/D[a]).at(-1);x[b]=Math.max(0,x[b]+diff)}return x}
+function renderDist(){
+  document.querySelectorAll("#d-base button").forEach(b=>b.classList.toggle("on",b.dataset.v===dBase));
+  document.querySelectorAll("#d-rota button").forEach(b=>b.classList.toggle("on",b.dataset.v===dRota));
+  $("#d-cali").checked=dCali;$("#d-bq").checked=dBq;
+  const Q=+$("#d-lote").value||4000;const active=activeBods();
+  const cards=$("#dcards");cards.innerHTML="";
+  SK.forEach(([k,nome])=>{
+    const st=STOCK[k];const D=demandByBod(k);const S={};const T={};
+    BODS.forEach(b=>{S[b]=(st.bod[b]||[0])[0];T[b]=MEL[b]?melEsp(k,b):LOTES.filter(l=>l.produto===k&&l.estado==="Em trânsito"&&bodOfLote(l)===b&&allDests().find(d=>d.id===l.destino)?.co).reduce((a,l)=>a+(+l.qtd||0),0)});
+    const SB={};BODS.forEach(b=>SB[b]=S[b]+T[b]);
+    const cov=b=>D[b]>0?SB[b]/D[b]:Infinity;
+    const x=waterfill(SB,Object.fromEntries(active.map(b=>[b,D[b]])),Q);
+    const worst=active.filter(b=>D[b]>0).sort((a,b)=>cov(a)-cov(b))[0];
+    // sequência: 4 lotes, um CEDI por envio
+    const sim={...SB};const seq=[];for(let i=0;i<4;i++){const b=active.filter(b=>D[b]>0).sort((a,c)=>sim[a]/D[a]-sim[c]/D[c])[0];if(!b)break;sim[b]+=Q;seq.push([b,sim[b]/D[b]])}
+    const totD=BODS.reduce((a,b)=>a+D[b],0);
+    const el=document.createElement("div");el.className="dcard";
+    const wc=worst?cov(worst):Infinity;
+    el.innerHTML=`<div class="top"><h2><span class="sw ${k}"></span>${st.nome}</h2><span class="note">${fmt(totD)} un./dia</span></div>
+      <div class="tbl"><table class="dtab"><tr><th>CEDI</th><th>Disp.</th><th>Trânsito</th><th>Un./dia</th><th>Cobertura</th></tr>${active.map(b=>{const c=cov(b);const cls=c<=3?"crit":c<=7?"warn":"good";return `<tr><td>${b}</td><td class="num">${fmt(S[b])}</td><td class="num">${T[b]?"+"+fmt(T[b]):"—"}</td><td class="num">${fmt(D[b])}</td><td class="num ${cls}">${isFinite(c)?f1(c)+" d":"—"}</td></tr>`}).join("")}</table></div>
+      <div class="reco"><div class="eyebrow">Próximo lote de ${fmt(Q)} vai para</div><div><b class="big">${worst||"—"}</b> <span class="note">${worst?(isFinite(wc)?`cobertura hoje ${f1(wc)} d · ruptura ${wc<1?"HOJE":WD[addD(HOJE,Math.floor(wc)).getDay()]+" "+dm(iso(addD(HOJE,Math.floor(wc))))}`:""):""}</span></div>
+        <details><summary>Dividir entre CEDIs · sequência dos próximos envios</summary>
+          <div style="margin-top:6px"><span class="eyebrow">Se puder dividir (iguala a cobertura)</span><div>${active.filter(b=>D[b]>0).map(b=>`${b}: <b>${fmt(x[b]||0)}</b>`).join(" · ")} <span class="note">→ ~${f1((Object.values(SB).reduce((a,v)=>a+v,0)+Q)/totD)} d em todas</span></div>
+          <span class="eyebrow" style="margin-top:4px;display:block">Sequência (um CEDI por envio)</span><div>${seq.map(([b,c],i)=>`${i+1}º ${b} <span class="note">(${f1(c)} d)</span>`).join(" → ")}</div></div></details></div>`;
+    cards.appendChild(el);
+  });
+  // região
+  const days=dBase==="d7"?7:30;const regs=Object.entries(DIST[dBase]).map(([r,v])=>({r,tot:(v.p+v.n+v.s)/days,sc:(v.p+v.n)/days,sh:shareRegion(r)})).sort((a,b)=>b.tot-a.tot);
+  const max=regs[0]?.tot||1;
+  $("#dreg").innerHTML=`<tr><th>Departamento</th><th>Soma Sculpt/dia</th><th>Total un./dia</th><th>Atendido por</th><th style="min-width:160px">Bogotá · Medellín · Cali · Barranquilla</th></tr>`+regs.map(o=>`<tr><td>${o.r}</td><td class="num">${f1(o.sc)}</td><td class="num">${f1(o.tot)}</td><td style="text-align:left">${BODS.filter(b=>o.sh[b]>0).map(b=>`${b} ${Math.round(o.sh[b]*100)}%`).join(" · ")}</td><td><div class="b" style="height:10px;border-radius:3px;background:var(--soft);display:flex;overflow:hidden;width:${Math.round(o.tot/max*100)}%"><i style="width:${o.sh.Bogotá*100}%;background:var(--accent)"></i><i style="width:${o.sh.Medellín*100}%;background:var(--naranja)"></i><i style="width:${o.sh.Cali*100}%;background:var(--pina)"></i><i style="width:${(o.sh.Barranquilla||0)*100}%;background:var(--shaker)"></i></div></td></tr>`).join("");
+  $("#dnote").innerHTML=`Vendas por departamento: Shopify, pedidos pagos, ${DIST.vendas_periodo[dBase]}. Cada departamento é atendido pelo CEDI mais próximo (regra fixa), como se nunca faltasse estoque. Trânsito por bodega: leitura Melonn ou lotes com bodega preenchida. Cobertura = (disponível + trânsito) ÷ demanda/dia da bodega.`;
+}
+$("#d-base").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;dBase=b.dataset.v;saveDist();renderDist()});
+$("#d-rota").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;dRota=b.dataset.v;saveDist();renderDist()});
+$("#d-cali").addEventListener("change",e=>{dCali=e.target.checked;saveDist();renderDist();renderPlan();renderCedi()});
+$("#d-bq").addEventListener("change",e=>{dBq=e.target.checked;saveDist();renderDist();renderPlan();renderCedi()});
+$("#d-lote").addEventListener("change",()=>{renderDist();renderPlan()});
+function saveDist(){try{localStorage.setItem("ruptura-dist",JSON.stringify({b:dBase,c:dCali,q:dBq}))}catch(_){}}
+
+/* ---------- plano de reposição ---------- */
+function renderPlan(){
+  const H=+$("#p-h").value,ALVO=+$("#p-alvo").value||10,CAP=+$("#p-cap").value||0,MIX=(+$("#p-mix").value||50)/100,DIAS=$("#p-dias").value,FIXO=$("#p-fixo").checked,LOTE=+$("#d-lote").value||4000;
+  const nProd=DIAS.length;const daily=nProd?CAP/nProd:0;const batch=FIXO?LOTE:Math.round(daily);
+  const active=activeBods();const skus=["p","n"];
+  // estado inicial
+  const S={},D={};skus.forEach(k=>{S[k]={};D[k]=demandByBod(k);active.forEach(b=>S[k][b]=(STOCK[k].bod[b]||[0])[0]+(MEL[b]?melEsp(k,b):LOTES.filter(l=>l.produto===k&&l.estado==="Em trânsito"&&bodOfLote(l)===b&&allDests().find(d=>d.id===l.destino)?.co).reduce((a,l)=>a+(+l.qtd||0),0)))});
+  const pend=[];const cal=[];const series={};skus.forEach(k=>active.forEach(b=>series[k+"|"+b]=[]));
+  // lotes já produzidos na fábrica (estado Produzido, destino CO): despacham hoje para o CEDI com menor cobertura
+  const prontos=LOTES.filter(l=>l.estado==="Produzido"&&skus.includes(l.produto)&&allDests().find(d=>d.id===l.destino)?.co);
+  prontos.sort((a,b)=>(b.qtd||0)-(a.qtd||0)).forEach(l=>{const k=l.produto;const q=+l.qtd||0;if(!q)return;const forced=bodOfLote(l);
+    const cands=active.filter(b=>D[k][b]>0).map(b=>({b,cov:(S[k][b]+pend.filter(e=>e.k===k&&e.b===b).reduce((a,e)=>a+e.q,0))/D[k][b]})).sort((a,c)=>a.cov-c.cov);
+    const b=forced&&active.includes(forced)?forced:(cands[0]||{}).b;if(!b)return;pend.push({day:1,k,b,q});cal.push({i:0,k,b,q,cov:Math.max(0,(cands.find(c=>c.b===b)||{cov:0}).cov),pronto:true,lote:l.lote})});
+  const semBod=Object.keys(MEL).length?[]:LOTES.filter(l=>l.estado==="Em trânsito"&&skus.includes(l.produto)&&!bodOfLote(l)&&allDests().find(d=>d.id===l.destino)?.co);
+  let prodP=0,prodN=0,short=0,rupt=[],bank=0;const labels=[];
+  for(let i=0;i<=H;i++){const day=addD(HOJE,i);labels.push(dm(iso(day)));
+    // entregas que chegam hoje
+    for(const e of pend.filter(e=>e.day===i)){S[e.k][e.b]+=e.q}
+    // consumo do dia (exceto dia 0: já descontado no comprometido)
+    if(i>0)skus.forEach(k=>active.forEach(b=>{S[k][b]-=D[k][b];if(S[k][b]<0){rupt.push([i,k,b]);short+=-S[k][b];S[k][b]=0}}));
+    skus.forEach(k=>active.forEach(b=>series[k+"|"+b].push(D[k][b]>0?S[k][b]/D[k][b]:null)));
+    // produção do dia (entrega amanhã)
+    const wd=((day.getDay()+6)%7)+1; // 1=seg … 7=dom
+    if(i<H&&DIAS.includes(String(wd))&&batch>0){
+      bank+=daily;let left=FIXO?(bank>=batch?batch:0):Math.round(daily);let guard=0;
+      while(left>0&&guard++<6){
+        // menor cobertura prevista no dia da entrega, considerando o que já está a caminho
+        const cands=[];skus.forEach(k=>active.forEach(b=>{if(D[k][b]<=0)return;const inc=pend.filter(e=>e.k===k&&e.b===b&&e.day>i).reduce((a,e)=>a+e.q,0);cands.push({k,b,cov:(S[k][b]+inc-D[k][b])/D[k][b]})}));
+        if(!cands.length)break;
+        // respeita o mix: se piña já passou do alvo com folga, prioriza naranja (e vice-versa)
+        const tot=prodP+prodN;const shareP=tot?prodP/tot:MIX;
+        let pool=cands;if(tot>=batch*2){if(shareP>MIX+0.1)pool=cands.filter(c=>c.k==="n");else if(shareP<MIX-0.1)pool=cands.filter(c=>c.k==="p");if(!pool.length)pool=cands}
+        pool.sort((a,c)=>a.cov-c.cov);const pick=pool[0];
+        const q=FIXO?batch:left;pend.push({day:i+1,k:pick.k,b:pick.b,q});cal.push({i,k:pick.k,b:pick.b,q,cov:Math.max(0,pick.cov)});if(pick.k==="p")prodP+=q;else prodN+=q;left-=q;if(FIXO)bank-=batch;
+        if(FIXO)break;
+      }
+    }
+  }
+  const covEnd=k=>active.map(b=>D[k][b]>0?`${b} ${f1(S[k][b]/D[k][b])} d`:"").filter(Boolean).join(" · ");
+  const firstR=rupt[0];
+  $("#p-kpis").innerHTML=[["Produzir no horizonte",fmt(prodP+prodN),`piña ${fmt(prodP)} · naranja ${fmt(prodN)} (${prodP+prodN?Math.round(prodP/(prodP+prodN)*100):0}% piña)`],["Capacidade no horizonte",fmt(Math.round(daily*[...Array(H).keys()].filter(i=>DIAS.includes(String(((addD(HOJE,i).getDay()+6)%7)+1))).length)),`${nProd} dias/semana · ${fmt(Math.round(daily))}/dia`],["Cobertura ao final · Piña",covEnd("p")||"—",`alvo ${ALVO} d`],["Cobertura ao final · Naranja",covEnd("n")||"—",`alvo ${ALVO} d`],
+    [firstR?"Primeira ruptura prevista":"Ruptura no horizonte",firstR?`${WD[addD(HOJE,firstR[0]).getDay()]} ${dm(iso(addD(HOJE,firstR[0])))}`:"nenhuma",firstR?`${STOCK[firstR[1]].nome} em ${firstR[2]} · ${fmt(short)} un. não atendidas no total`:"plano cobre a demanda"]].map(([a,b,c])=>`<div class="kpi"><div class="eyebrow">${a}</div><div class="v" style="font-size:17px">${b}</div><div class="s">${c}</div></div>`).join("");
+  // calendário
+  $("#p-cal").innerHTML=`<tr><th>Produz</th><th>Entrega</th><th>CEDI</th><th>SKU</th><th>Qtd</th><th>Cobertura do destino antes</th></tr>`+(cal.length?cal.map(c=>`<tr><td>${c.pronto?`<span class="pill warn">já produzido${c.lote?" · lote "+c.lote:""}</span> despachar ${dmw(iso(addD(HOJE,c.i)))}`:dmw(iso(addD(HOJE,c.i)))}</td><td>${dmw(iso(addD(HOJE,c.i+1)))}</td><td><b>${c.b}</b></td><td><span class="sw ${c.k}"></span>${STOCK[c.k].nome}</td><td class="num">${fmt(c.q)}</td><td class="num ${c.cov<=2?"crit":c.cov<=5?"warn":""}">${f1(c.cov)} d</td></tr>`).join(""):`<tr><td colspan="6" class="empty">Sem produção no horizonte (capacidade zero ou nenhum dia de produção).</td></tr>`);
+  // gráfico
+  const cols={p:css("--pina"),n:css("--naranja")};const dashB={Bogotá:[],Medellín:[6,4],Cali:[2,3],Barranquilla:[10,3,2,3]};
+  const ds=Object.entries(series).map(([key,v])=>{const[k,b]=key.split("|");return{label:`${STOCK[k].nome.replace("Soma Sculpt ","")} · ${b}`,data:v,borderColor:cols[k],borderDash:dashB[b],borderWidth:2,pointRadius:0,tension:.2}});
+  ds.push({label:"Alvo",data:labels.map(()=>ALVO),borderColor:css("--muted"),borderDash:[3,3],borderWidth:1,pointRadius:0});
+  mk("cPlan",{type:"line",data:{labels,datasets:ds},options:baseOpts({plugins:{tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y==null?"—":f1(c.parsed.y)+" dias"}`}}},scales:{y:{beginAtZero:true,ticks:{color:css("--muted"),callback:v=>v+" d"},grid:{color:css("--line")},border:{display:false}}}})});
+  $("#p-note").innerHTML=(Object.keys(MEL).length?`Trânsito por CEDI: leitura Melonn (${Object.keys(MEL).join(", ")}). `:"")+(semBod.length?`<span class="pill crit">atenção</span> ${semBod.map(l=>`${fmt(l.qtd)} ${STOCK[l.produto].nome.replace("Soma Sculpt ","")}`).join(", ")} em trânsito <b>sem bodega informada</b> — preencha a bodega na aba Controle de lotes para entrar na cobertura por CEDI. `:"")+`Regra de escolha: a cada dia de produção, o lote vai para o par SKU/CEDI com menor cobertura prevista na data de entrega (já contando o que está a caminho), mantendo o mix de produção perto de ${Math.round(MIX*100)}% piña. Lotes já produzidos (estado “Produzido”) são despachados primeiro, hoje, para o CEDI com menor cobertura — ou para a bodega já informada no lote. Shaker não entra (não é produzido na fábrica). Roteamento ${dRota==="geo"?"geográfico":"diagnóstico"}; base de vendas ${dBase==="d7"?"7":"30"} dias. Cobertura-alvo é referência visual: se a capacidade não alcança o alvo, o plano prioriza evitar ruptura.`;
+}
+["p-h","p-alvo","p-cap","p-mix","p-dias","p-fixo"].forEach(id=>$("#"+id).addEventListener("change",renderPlan));
+
+/* ---------- charts ---------- */
+Chart.defaults.font.family=css("--font");Chart.defaults.font.size=11.5;
+let CH={};
+function mk(id,cfg){if(CH[id])CH[id].destroy();CH[id]=new Chart($("#"+id),cfg);}
+function baseOpts(extra){const fg=css("--muted"),ln=css("--line");return Object.assign({responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},
+ plugins:{legend:{labels:{color:fg,boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:"rectRounded"}},tooltip:{backgroundColor:css("--surface"),titleColor:css("--fg"),bodyColor:css("--fg"),borderColor:ln,borderWidth:1,padding:10}},
+ scales:{x:{ticks:{color:fg,maxRotation:0,autoSkip:true,maxTicksLimit:10},grid:{display:false},border:{color:ln}},y:{beginAtZero:true,ticks:{color:fg,callback:v=>fmt(v)},grid:{color:ln},border:{display:false}}}},extra||{})}
+
+/* ---------- main ---------- */
+let curSku=store.sku||"n";let PER=null;
+function render(){
+  if(d1.value>d2.value){const t=d1.value;d1.value=d2.value;d2.value=t}
+  store.d1=d1.value;store.d2=d2.value;store.inchoje=inc.checked;save();
+  document.querySelectorAll("#presets button").forEach((b,i)=>b.classList.toggle("on",i===store.preset));
+  let rows=ROWS.filter(r=>r.d>=d1.value&&r.d<=d2.value&&(inc.checked||r.d!==META.parcial));
+  if(!rows.length){rows=ROWS.filter(r=>r.d===d2.value)}
+  const n=rows.length, sum=k=>rows.reduce((a,r)=>a+r[k],0);
+  const ord=sum("o"),it=sum("i"),tp=sum("p"),tn=sum("n"),ts=sum("s");
+  const avg={p:tp/n,n:tn/n,s:ts/n,o:ord/n};
+  // pico / mínimo = média dos 3 dias mais fortes / mais fracos do período
+  const w=Math.min(3,n);
+  const win=k=>{const v=rows.map(r=>r[k]).sort((a,b)=>b-a);const m=a=>a.reduce((x,y)=>x+y,0)/a.length;return{pico:m(v.slice(0,w)),min:m(v.slice(-w))}};
+  const W={p:win("p"),n:win("n"),s:win("s"),o:win("o")};
+  const maxDay=rows.reduce((a,r)=>r.o>a.o?r:a,rows[0]), minDay=rows.reduce((a,r)=>r.o<a.o?r:a,rows[0]);
+  const prodPct=tp+tn?[tp/(tp+tn)*100,tn/(tp+tn)*100]:[0,0];
+  PER={avg,W,ord,n};
+  $("#per-lbl").textContent=`${dmw(rows[0].d)} → ${dmw(rows[n-1].d)} · ${n} dia${n>1?"s":""}`;
+
+  // KPIs
+  const K=[
+   ["Pedidos pagos",fmt(ord),`${fmt(it)} itens · pendentes/expirados excluídos`],
+   ["Pedidos / dia",fmt(avg.o),`pico ${fmt(maxDay.o)} (${dm(maxDay.d)}) · mín ${fmt(minDay.o)} (${dm(minDay.d)})`],
+   ["Soma Sculpt / pedido",(tp+tn)/ord>0?((tp+tn)/ord).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—",`piña + naranja ÷ pedidos · ${f1(it/ord)} itens/pedido com shaker`],
+   ["Piña / dia",fmt(avg.p),`${f1(prodPct[0])}% do Soma Sculpt`],
+   ["Naranja / dia",fmt(avg.n),`${f1(prodPct[1])}% do Soma Sculpt`],
+   ["Shaker / dia",fmt(avg.s),`${f1(ts/ord*100)}% dos pedidos levam`],
+   ["Pico (ped/dia)",fmt(W.o.pico),`média dos ${w} dias mais fortes`],
+   ["Mínimo (ped/dia)",fmt(W.o.min),`média dos ${w} dias mais fracos`],
+  ];
+  $("#kpis").innerHTML=K.map(([a,b,c])=>`<div class="kpi"><div class="eyebrow">${a}</div><div class="v">${b}</div><div class="s">${c}</div></div>`).join("");
+
+  // rupture cards
+  const rup=$("#rup");rup.innerHTML="";
+  const scen=(k)=>[["Mínimo",W[k].min],["Média",avg[k]],["Pico",W[k].pico]];
+  const cls=days=>days<=3?"crit":days<=7?"warn":"good";
+  SK.forEach(([k,nome,tok])=>{
+    const st=STOCK[k];const avail=Object.values(st.bod).reduce((a,[x])=>a+x,0);const comm=Object.values(st.bod).reduce((a,[,c])=>a+c,0);
+    const lt=lotesTransit(k);const tr=+store.tr[k]||0;const tot=avail+lt+tr;
+    const dAvg=tot/(avg[k]||1e-9);
+    const el=document.createElement("div");el.className="rcard";
+    el.innerHTML=`<div class="top"><h2><span class="sw ${k}"></span>${st.nome}</h2><span class="pill ${cls(dAvg)}">${avg[k]>0?f1(dAvg)+" dias (média)":"sem venda"}</span></div>
+     <div class="stock"><span>Disponível Shopify</span><span class="num">${fmt(avail)}</span>
+      <span>Comprometido (já vendido)</span><span class="num">${fmt(comm)}</span>
+      <span>Em trânsito (${transitSrc(k)})</span><span class="num">${fmt(lt)}</span>
+      <span><label for="tr-${k}">Ajuste manual</label></span><span><input type="number" id="tr-${k}" min="0" step="100" value="${tr}"></span>
+      <span><b>Base para ruptura</b></span><span class="num"><b>${fmt(tot)}</b></span></div>
+     <div class="scen">${scen(k).map(([l,r])=>{const d=r>0?tot/r:Infinity;const dt=isFinite(d)?addD(HOJE,Math.floor(d)):null;return `<span class="lab">${l}</span><span class="rate">${fmt(r)}/dia · ${isFinite(d)?f1(d)+" d":"—"}</span><span class="date ${isFinite(d)?cls(d):""}">${dt?(Math.floor(d)===0?"HOJE":WD[dt.getDay()]+" "+dm(iso(dt))):"—"}</span>`}).join("")}</div>`;
+    rup.appendChild(el);
+    el.querySelector("input").onchange=e=>{store.tr[k]=Math.max(0,+e.target.value||0);save();render()};
+  });
+
+  // alertas
+  const al=[];SK.forEach(([k])=>{const st=STOCK[k];const avail=Object.values(st.bod).reduce((a,[x])=>a+x,0)+lotesTransit(k)+(+store.tr[k]||0);const d=avail/(avg[k]||1e-9);const bz=Object.entries(st.bod).filter(([b,[x]])=>x===0&&b!=="Cali").map(([b])=>b);
+    if(avg[k]>0&&d<=3)al.push(["crit",`${st.nome}: ruptura em <b>${f1(d)} dias</b> no ritmo médio do período (${fmt(avail)} un.)${bz.length?` · ${bz.join(" e ")} já sem disponível`:""}`]);
+    else if(avg[k]>0&&d<=7)al.push(["warn",`${st.nome}: <b>${f1(d)} dias</b> de cobertura${bz.length?` · ${bz.join(" e ")} sem disponível`:""}`]);
+    else if(bz.length)al.push(["warn",`${st.nome}: ${bz.join(" e ")} sem disponível (cobertura total ${f1(d)} d)`])});
+  $("#alerts").innerHTML=al.map(([c,t])=>`<div class="alert ${c}"><span class="dot"></span><span>${t}</span></div>`).join("");
+  const nc=al.filter(a=>a[0]==="crit").length;$("#nb-rup").textContent=nc?String(nc):"";
+  // bodega table
+  const bods=["Bogotá","Medellín","Cali"];
+  let h=`<tr><th>SKU</th>${bods.map(b=>`<th>${b}</th>`).join("")}<th>Total disp.</th><th>Dias (média)</th></tr>`;
+  SK.forEach(([k])=>{const st=STOCK[k];const tot=bods.reduce((a,b)=>a+st.bod[b][0],0);const d=tot/(avg[k]||1e-9);
+    h+=`<tr><td><span class="sw ${k}"></span>${st.nome} <span class="note">${st.sku}</span></td>${bods.map(b=>{const[a,c]=st.bod[b];return `<td class="num">${a===0?`<span class="pill crit">0</span>`:fmt(a)}<span class="note"> (${fmt(c)} compr.)</span></td>`}).join("")}<td class="num"><b>${fmt(tot)}</b></td><td class="num ${cls(d)}">${avg[k]>0?f1(d):"—"}</td></tr>`});
+  $("#bod").innerHTML=h;
+
+  // projection chart
+  const seg=$("#seg");seg.innerHTML="";
+  SK.forEach(([k,nome])=>{const b=document.createElement("button");b.id="seg-"+k;b.textContent=nome;b.classList.toggle("on",k===curSku);b.onclick=()=>{curSku=k;store.sku=k;save();render()};seg.appendChild(b)});
+  const st=STOCK[curSku];const tot=Object.values(st.bod).reduce((a,[x])=>a+x,0)+lotesTransit(curSku)+(+store.tr[curSku]||0);
+  const rates=scen(curSku);const maxDays=Math.min(45,Math.max(5,Math.ceil(tot/(rates[0][1]||1))+1));
+  const labels=[];for(let i=0;i<=maxDays;i++)labels.push(dm(iso(addD(HOJE,i))));
+  const col=css("--"+SK.find(x=>x[0]===curSku)[2]);
+  const dash={"Média":[],"Pico":[6,4],"Mínimo":[2,3]};
+  mk("cProj",{type:"line",data:{labels,datasets:rates.map(([l,r])=>({label:`${l} (${fmt(r)}/dia)`,data:labels.map((_,i)=>Math.max(0,tot-r*i)),borderColor:col,borderDash:dash[l],borderWidth:l==="Média"?2.5:1.5,pointRadius:0,tension:0,fill:false}))},
+   options:baseOpts({plugins:{tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)} un.`}}}})});
+  // units per day
+  const lab=rows.map(r=>dm(r.d));
+  mk("cUnits",{type:"line",data:{labels:lab,datasets:SK.map(([k,nome,tok])=>({label:nome,data:rows.map(r=>r[k]),borderColor:css("--"+tok),backgroundColor:css("--"+tok),borderWidth:2,pointRadius:rows.length>45?0:2.5,pointHoverRadius:5,tension:.25}))},options:baseOpts()});
+  mk("cOrders",{type:"bar",data:{labels:lab,datasets:[{label:"Pedidos",data:rows.map(r=>r.o),backgroundColor:css("--accent"),borderRadius:3,borderSkipped:"bottom",maxBarThickness:28}]},options:baseOpts({plugins:{legend:{display:false}}})});
+  mk("cTot",{type:"bar",data:{labels:SK.map(x=>x[1]),datasets:[{data:[tp,tn,ts],backgroundColor:SK.map(x=>css("--"+x[2])),borderRadius:4,borderSkipped:"bottom",maxBarThickness:60}]},options:baseOpts({indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:css("--muted"),callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}},y:{ticks:{color:css("--fg")},grid:{display:false}}}})});
+  renderDist();renderPlan();renderBolsas();renderCedi();
+  // daily table
+  $("#daily").innerHTML=`<tr><th>Dia</th><th>Pedidos</th><th>Itens</th><th>Piña</th><th>Naranja</th><th>Shaker</th></tr>`+rows.map(r=>`<tr><td>${dmw(r.d)}${r.d===META.parcial?" <span class='note'>(parcial)</span>":""}</td><td class="num">${fmt(r.o)}</td><td class="num">${fmt(r.i)}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.n)}</td><td class="num">${fmt(r.s)}</td></tr>`).join("")+`<tr><td><b>Total</b></td><td class="num"><b>${fmt(ord)}</b></td><td class="num"><b>${fmt(it)}</b></td><td class="num"><b>${fmt(tp)}</b></td><td class="num"><b>${fmt(tn)}</b></td><td class="num"><b>${fmt(ts)}</b></td></tr>`;
+}
+render();
+showTab(h0==="lotes"?"lotes":"ruptura");
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",render);
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+</script>
+</body></html>
