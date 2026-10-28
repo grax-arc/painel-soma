@@ -200,6 +200,7 @@ tr:last-child td{border-bottom:0}
 tr.tot td,tr.sec td{background:var(--surface-2)}
 tr.tot td{font-weight:600;border-top:2px solid var(--line-strong);color:var(--fg)}
 .ctab td,.ctab th{padding:7px 10px;font-size:var(--fs-sm)}
+.ctab th small{display:block;font-size:9.5px;letter-spacing:0;text-transform:none;color:var(--faint);font-weight:500}
 .ctab td.d{font-family:var(--mono);font-weight:500}
 .ctab td.d.crit{color:var(--crit)}.ctab td.d.warn{color:var(--warn)}.ctab td.d.good{color:var(--good)}
 .ctab tr.sub td{color:var(--muted);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;background:var(--surface-2)}
@@ -244,7 +245,8 @@ td.lote-cell{border-left:4px solid var(--lc,var(--line));font-family:var(--mono)
 .rcard .stock span:nth-child(odd){color:var(--muted)}
 .rcard .stock span:nth-child(even){font-family:var(--mono);font-variant-numeric:tabular-nums}
 .scen{display:grid;grid-template-columns:auto 1fr auto;gap:7px 12px;align-items:center;font-size:var(--fs);border-top:1px solid var(--line);padding-top:10px}
-.scen .lab{color:var(--muted);font-size:var(--fs-sm);font-weight:500}
+.scen .lab{color:var(--muted);font-size:var(--fs-sm);font-weight:500;display:grid;line-height:1.2}
+.scen .lab small{font-size:10px;color:var(--faint);font-weight:400;white-space:nowrap}
 .scen .rate{font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted);text-align:right}
 .scen .date{font-family:var(--mono);font-weight:600;text-align:right;padding:1px 8px;border-radius:999px;justify-self:end}
 .scen .date.crit{color:var(--crit);background:var(--critbg)}.scen .date.warn{color:var(--warn);background:var(--warnbg)}.scen .date.good{color:var(--good);background:var(--goodbg)}
@@ -388,7 +390,7 @@ td.lote-cell{border-left:4px solid var(--lc,var(--line));font-family:var(--mono)
       <p>Estoque disponível (Shopify, descontando pedidos já comprometidos) + em trânsito ÷ ritmo de venda do período selecionado.</p>
     </div>
     <div class="rup" id="rup"></div>
-    <div class="note">Cenários: <b>Mínimo</b> = média dos 3 dias mais fracos do período · <b>Média</b> = média diária do período · <b>Pico</b> = média dos 3 dias mais fortes do período. Selecione um período de pico (ex.: 15–17/09) para ver a ruptura em escala maior. O trânsito vem dos lotes marcados “Em trânsito” abaixo; “Ajuste manual” é um extra salvo só neste navegador.</div>
+    <div class="note">Cenários: <b>Média</b> = ritmo diário do período selecionado · <b>Pico</b> = média dos 3 dias mais fortes de todo o histórico (atualiza sozinho se vier um dia maior) · <b>Mínimo</b> = média dos 3 dias mais fracos dos últimos 30 dias. Pico e Mínimo não dependem do período; as datas que os definem aparecem em cada cenário. O trânsito vem dos lotes marcados “Em trânsito” abaixo; “Ajuste manual” é um extra salvo só neste navegador.</div>
   </section>
 
   <section class="card" id="mel-sec" data-tab="melonn" hidden>
@@ -745,7 +747,7 @@ function renderBolsas(){
   const lido=bods.map(b=>BOL[b].lido_em).sort().at(-1);
   const cards=[["peq","Bolsa pequena","1 unidade por pedido"],["gr","Bolsa grande","2+ unidades (com shaker)"]].map(([k,nome,sub])=>{
     const st=tot(k),esp=tot("esp_"+k);const rate=bolsasDemand(k);const used=Math.round(rate*bolDays(bods[0]));const proj=Math.max(0,st-used);const base=proj+esp;
-    const scen=[["Mínimo",k==="gr"?W.s.min:Math.max(0,W.o.min-W.s.min)],["Média",rate],["Pico",k==="gr"?W.s.pico:Math.max(0,W.o.pico-W.s.pico)]];
+    const scen=[["Mínimo",k==="gr"?W.s.min:Math.max(0,W.o.min-W.s.min),k==="gr"?W.s.minDays:W.o.minDays],["Média",rate,"período selecionado"],["Pico",k==="gr"?W.s.pico:Math.max(0,W.o.pico-W.s.pico),k==="gr"?W.s.picoDays:W.o.picoDays]];
     const cls=d=>d<=3?"crit":d<=7?"warn":"good";const dm_=rate>0?base/rate:Infinity;
     return `<div class="rcard"><div class="top"><h2>${nome}</h2><span class="pill ${cls(dm_)}">${isFinite(dm_)?f1(dm_)+" dias (média)":"—"}</span></div>
       <div class="stock"><span>Corte Melonn (${lido?dm(lido.slice(0,10)):"—"})</span><span class="num">${fmt(st)}</span>
@@ -805,11 +807,11 @@ function renderCedi(){
       const base=st[0]+tr;const r={min:W[k].min*f,med:avg[k]*f,pico:W[k].pico*f};const d=Object.fromEntries(Object.entries(r).map(([x,v])=>[x,v>0?base/v:Infinity]));
       rows.push({nome:STOCK[k].nome,sw:k,disp:st[0],comp:st[1],tr,base,r,d});if(isFinite(d.med)&&d.med<=3)alerts.push([b,STOCK[k].nome,d.med])});
     const bo=BOL[b]||{};[["peq","Bolsa pequena"],["gr","Bolsa grande"]].forEach(([k,nome])=>{const corte=+bo[k]||0;const esp=+bo["esp_"+k]||0;const rate=bolsasDemand(k,b);const used=Math.round(rate*bolDays(b));const base=Math.max(0,corte-used)+esp;
-      const r={min:(k==="gr"?W.s.min:Math.max(0,W.o.min-W.s.min))*f,med:rate,pico:(k==="gr"?W.s.pico:Math.max(0,W.o.pico-W.s.pico))*f};const d=Object.fromEntries(Object.entries(r).map(([x,v])=>[x,v>0?base/v:Infinity]));
+      const r={min:(k==="gr"?W.s.min:Math.max(0,W.o.min-W.s.min))*f,med:(k==="gr"?avg.s:Math.max(0,avg.o-avg.s))*f,pico:(k==="gr"?W.s.pico:Math.max(0,W.o.pico-W.s.pico))*f};const d=Object.fromEntries(Object.entries(r).map(([x,v])=>[x,v>0?base/v:Infinity]));
       rows.push({nome,bag:true,disp:corte,comp:used,tr:esp,base,r,d});if(Object.keys(bo).length&&isFinite(d.med)&&d.med<=3)alerts.push([b,nome,d.med])});
     const worst=rows.filter(x=>isFinite(x.d.med)).sort((a,c)=>a.d.med-c.d.med)[0];
     return {b,f,rows,worst,html:`<section class="card"><div class="sec-h"><h2>${b}</h2><p>${Math.round(f*100)}% dos pedidos · ${fmt(avg.o*f)} pedidos/dia no período${worst?` · mais urgente: <b>${worst.nome}</b> ${dtxt(worst.d.med)}`:""}</p></div>
-      <div class="tbl"><table class="ctab"><tr><th>Item</th><th>Disponível</th><th>Compr.</th><th>Trânsito</th><th>Base</th><th>Un./dia (média)</th><th>Mínimo</th><th>Média</th><th>Pico</th></tr>
+      <div class="tbl"><table class="ctab"><tr><th>Item</th><th>Disponível</th><th>Compr.</th><th>Trânsito</th><th>Base</th><th>Un./dia (média)</th><th title="3 dias mais fracos dos últimos 30 d: ${W.o.minDays}">Mínimo<br><small>${W.o.minDays}</small></th><th title="período selecionado">Média<br><small>período</small></th><th title="3 dias mais fortes do histórico: ${W.o.picoDays}">Pico<br><small>${W.o.picoDays}</small></th></tr>
       ${rows.map(x=>`<tr><td>${x.sw?`<span class="sw ${x.sw}"></span>`:""}${x.nome}${x.bag?' <span class="note">corte Melonn</span>':""}</td><td class="num">${fmt(x.disp)}</td><td class="num">${fmt(x.comp)}</td><td class="num">${x.tr?"+"+fmt(x.tr):"—"}</td><td class="num"><b>${fmt(x.base)}</b></td><td class="num">${fmt(x.r.med)}</td>${["min","med","pico"].map(y=>`<td class="d ${isFinite(x.d[y])?cls(x.d[y]):""}" title="${isFinite(x.d[y])?f1(x.d[y])+" dias":""}">${dtxt(x.d[y])}</td>`).join("")}</tr>`).join("")}</table></div></section>`}});
   $("#cedi-blocks").innerHTML=blocks.map(x=>x.html).join("");
   alerts.sort((a,b)=>a[2]-b[2]);$("#cedi-alerts").innerHTML=alerts.map(([b,n,d])=>`<div class="alert crit"><span class="dot"></span><span><b>${b}</b> · ${n}: ${d<1?"rompe HOJE":`${f1(d)} dias`} no ritmo médio</span></div>`).join("");
@@ -951,9 +953,12 @@ function render(){
   const n=rows.length, sum=k=>rows.reduce((a,r)=>a+r[k],0);
   const ord=sum("o"),it=sum("i"),tp=sum("p"),tn=sum("n"),ts=sum("s");
   const avg={p:tp/n,n:tn/n,s:ts/n,o:ord/n};
-  // pico / mínimo = média dos 3 dias mais fortes / mais fracos do período
-  const w=Math.min(3,n);
-  const win=k=>{const v=rows.map(r=>r[k]).sort((a,b)=>b-a);const m=a=>a.reduce((x,y)=>x+y,0)/a.length;return{pico:m(v.slice(0,w)),min:m(v.slice(-w))}};
+  // Cenários independentes do período: Pico = média dos 3 dias mais fortes de todo o histórico; Mínimo = média dos 3 dias mais fracos dos últimos 30 dias completos.
+  const FULL=ROWS.filter(r=>r.d!==META.parcial);const L30=FULL.slice(-30);const w=3;
+  const top=(arr,k,desc)=>[...arr].sort((a,b)=>desc?b[k]-a[k]:a[k]-b[k]).slice(0,Math.min(w,arr.length));
+  const m=(arr,k)=>arr.reduce((x,r)=>x+r[k],0)/(arr.length||1);
+  const days=arr=>{const ds=arr.map(r=>r.d).sort();return ds.map(d=>dm(d)).join(", ")};
+  const win=k=>{const P=top(FULL,k,true),M=top(L30,k,false);return{pico:m(P,k),min:m(M,k),picoDays:days(P),minDays:days(M)}};
   const W={p:win("p"),n:win("n"),s:win("s"),o:win("o")};
   const maxDay=rows.reduce((a,r)=>r.o>a.o?r:a,rows[0]), minDay=rows.reduce((a,r)=>r.o<a.o?r:a,rows[0]);
   const prodPct=tp+tn?[tp/(tp+tn)*100,tn/(tp+tn)*100]:[0,0];
@@ -968,14 +973,14 @@ function render(){
    ["Piña / dia",fmt(avg.p),`${f1(prodPct[0])}% do Soma Sculpt`],
    ["Naranja / dia",fmt(avg.n),`${f1(prodPct[1])}% do Soma Sculpt`],
    ["Shaker / dia",fmt(avg.s),`${f1(ts/ord*100)}% dos pedidos levam`],
-   ["Pico (ped/dia)",fmt(W.o.pico),`média dos ${w} dias mais fortes`],
-   ["Mínimo (ped/dia)",fmt(W.o.min),`média dos ${w} dias mais fracos`],
+   ["Pico (ped/dia)",fmt(W.o.pico),`3 dias mais fortes do histórico: ${W.o.picoDays}`],
+   ["Mínimo (ped/dia)",fmt(W.o.min),`3 dias mais fracos dos últimos 30 d: ${W.o.minDays}`],
   ];
   $("#kpis").innerHTML=K.map(([a,b,c])=>`<div class="kpi"><div class="eyebrow">${a}</div><div class="v">${b}</div><div class="s">${c}</div></div>`).join("");
 
   // rupture cards
   const rup=$("#rup");rup.innerHTML="";
-  const scen=(k)=>[["Mínimo",W[k].min],["Média",avg[k]],["Pico",W[k].pico]];
+  const scen=(k)=>[["Mínimo",W[k].min,W[k].minDays],["Média",avg[k],"período selecionado"],["Pico",W[k].pico,W[k].picoDays]];
   const cls=days=>days<=3?"crit":days<=7?"warn":"good";
   SK.forEach(([k,nome,tok])=>{
     const st=STOCK[k];const avail=Object.values(st.bod).reduce((a,[x])=>a+x,0);const comm=Object.values(st.bod).reduce((a,[,c])=>a+c,0);
@@ -988,7 +993,7 @@ function render(){
       <span>Em trânsito (${transitSrc(k)})</span><span class="num">${fmt(lt)}</span>
       <span><label for="tr-${k}">Ajuste manual</label></span><span><input type="number" id="tr-${k}" min="0" step="100" value="${tr}"></span>
       <span><b>Base para ruptura</b></span><span class="num"><b>${fmt(tot)}</b></span></div>
-     <div class="scen">${scen(k).map(([l,r])=>{const d=r>0?tot/r:Infinity;const dt=isFinite(d)?addD(HOJE,Math.floor(d)):null;return `<span class="lab">${l}</span><span class="rate">${fmt(r)}/dia · ${isFinite(d)?f1(d)+" d":"—"}</span><span class="date ${isFinite(d)?cls(d):""}">${dt?(Math.floor(d)===0?"HOJE":WD[dt.getDay()]+" "+dm(iso(dt))):"—"}</span>`}).join("")}</div>`;
+     <div class="scen">${scen(k).map(([l,r,src])=>{const d=r>0?tot/r:Infinity;const dt=isFinite(d)?addD(HOJE,Math.floor(d)):null;return `<span class="lab">${l}<small>${src||""}</small></span><span class="rate">${fmt(r)}/dia · ${isFinite(d)?f1(d)+" d":"—"}</span><span class="date ${isFinite(d)?cls(d):""}">${dt?(Math.floor(d)===0?"HOJE":WD[dt.getDay()]+" "+dm(iso(dt))):"—"}</span>`}).join("")}</div>`;
     rup.appendChild(el);
     el.querySelector("input").onchange=e=>{store.tr[k]=Math.max(0,+e.target.value||0);save();render()};
   });
