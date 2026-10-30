@@ -559,10 +559,7 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <label class="chk">Ticket <select id="tk-sel"></select></label>
     <span class="note" id="tk-src"></span>
   </div>
-  <section class="card" data-tab="tk">
-    <div class="sec-h"><h2>Todos os tickets</h2><p>Leitura do controle de lote agrupada por nº de ticket. Início = primeira data · fechamento = última data · pagamento final = fechamento + 30 dias.</p></div>
-    <div class="tbl"><table id="tk-all"></table></div>
-  </section>
+
   <div class="alerts" id="tk-alerts" data-tab="tk"></div>
   <div class="kpis five" id="tk-kpis" data-tab="tk"></div>
 
@@ -611,6 +608,10 @@ tr.oc-det:hover>td{background:var(--surface-2)}
   <section class="card" data-tab="tk">
     <details id="tk-ins-wrap"><summary>Verificação de insumos / embalagem (opcional)</summary>
       <div class="tbl" style="margin-top:8px"><table id="tk-ins"></table></div>
+    </details>
+    <details id="tk-all-wrap"><summary>Todos os tickets lidos do controle de lote</summary>
+      <div class="note" style="margin:8px 0">Agrupado por nº de ticket (linhas com o mesmo nº = 1 ticket). Início = primeira data · fechamento = última data · pagamento final = fechamento + 30 dias.</div>
+      <div class="tbl"><table id="tk-all"></table></div>
     </details>
     <details><summary>Como funciona na versão real</summary>
       <div class="howto" style="margin-top:8px">
@@ -1447,7 +1448,7 @@ function tkSummary(id,R){
   const pagFinal=fim?iso(addD(pd(fim),30)):null;
   return {id,rows,refs,ent,tr,ini,fim,aberto,pagFinal,lotes:[...new Set(rows.map(r=>r.lote).filter(v=>v!=null))],oc:OCS_T[id]||null,comps:COMP0[id]||[]};
 }
-let tkCur=null;try{tkCur=localStorage.getItem("soma-tk")}catch(_){}
+let tkCur="ex";try{tkCur=localStorage.getItem("soma-tk2")||"ex"}catch(_){}
 function renderTK(){
   if(!$("#tk-kpis"))return;
   const R=tkRows();const ids=[...new Set(R.map(r=>r.tk))].sort((a,b)=>b-a);const S=ids.map(id=>tkSummary(id,R));
@@ -1456,12 +1457,12 @@ function renderTK(){
   $("#tk-all").innerHTML=`<tr><th>Ticket</th><th>Lote(s)</th><th>Linhas</th><th>Piña</th><th>Naranja</th><th>Frutos Rojos</th><th>Em trânsito</th><th>Início</th><th>Fechamento</th><th>Pagamento final</th><th>Comprovantes</th><th></th></tr>`+
     S.map(t=>`<tr><td><b>Ticket ${pad2(t.id)}</b></td><td>${t.lotes.join(", ")||"—"}</td><td class="num">${t.rows.length}</td>${["p","n","f"].map(k=>`<td class="num">${t.ent(k)?fmt(t.ent(k)):"—"}</td>`).join("")}<td class="num">${["p","n","f","s"].reduce((a,k)=>a+t.tr(k),0)?fmt(["p","n","f","s"].reduce((a,k)=>a+t.tr(k),0)):"—"}</td><td class="num">${t.ini?dm(t.ini):"—"}</td><td class="num">${t.fim?dm(t.fim):"—"}${t.aberto?'<br><span class="note">provisório</span>':""}</td><td class="num">${t.pagFinal?dfull(t.pagFinal):"—"}</td><td>${t.comps.length?`<span class="pill good">${t.comps.length}</span>`:'<span class="note">—</span>'}</td><td><button class="oc-btn" type="button" data-tk="${t.id}">Abrir</button></td></tr>`).join("")+
     `<tr><td colspan="12" class="note" style="white-space:normal">${tkHasCol()?"Agrupado pela coluna Ticket do controle de lote.":"O controle de lote ainda não tem a coluna Ticket — por enquanto ticket = nº do lote. Quando a coluna existir, o agrupamento passa a ser por ela."}</td></tr>`;
-  $("#tk-all").querySelectorAll("button[data-tk]").forEach(b=>b.onclick=()=>{tkCur=b.dataset.tk;try{localStorage.setItem("soma-tk",tkCur)}catch(_){}renderTK();$("#tk-title").scrollIntoView({block:"start",behavior:"smooth"})});
+  $("#tk-all").querySelectorAll("button[data-tk]").forEach(b=>b.onclick=()=>{tkCur=b.dataset.tk;try{localStorage.setItem("soma-tk2",tkCur)}catch(_){}renderTK();$("#tk-title").scrollIntoView({block:"start",behavior:"smooth"})});
   // seletor
-  const opts=ids.map(id=>[String(id),`Ticket ${pad2(id)}`]).concat([["ex","Exemplo (fictício) · Ticket 09"]]);
-  if(!tkCur||!opts.some(o=>o[0]===tkCur))tkCur=opts[0]?opts[0][0]:"ex";
+  const opts=[["ex","Modelo · Ticket 09 (exemplo)"]].concat(ids.map(id=>[String(id),`Ticket ${pad2(id)} · controle de lote`]));
+  if(!tkCur||!opts.some(o=>o[0]===tkCur))tkCur="ex";
   $("#tk-sel").innerHTML=opts.map(([v,l])=>`<option value="${v}" ${v===tkCur?"selected":""}>${l}</option>`).join("");
-  $("#tk-sel").onchange=e=>{tkCur=e.target.value;try{localStorage.setItem("soma-tk",tkCur)}catch(_){}renderTK()};
+  $("#tk-sel").onchange=e=>{tkCur=e.target.value;try{localStorage.setItem("soma-tk2",tkCur)}catch(_){}renderTK()};
   const ex=tkCur==="ex";
   $("#tk-pill").className="pill "+(ex?"warn":"good");$("#tk-pill").textContent=ex?"Exemplo com dados fictícios":"Dados reais · controle de lote";
   $("#tk-eyebrow").textContent=ex?"Exemplo · ambiente compartilhado SOMA × BioNutriLab":"Ambiente compartilhado SOMA × BioNutriLab";
