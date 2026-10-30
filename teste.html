@@ -393,6 +393,8 @@ tr.oc-det:hover>td{background:var(--surface-2)}
 /* ---------- aba de exemplo: Ticket · BioNutriLab ---------- */
 .tk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:6px 20px;font-size:12.5px}
 .tk-grid div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:5px 0}
+.tk-link{color:var(--muted);font-size:16px}
+#tk-lote,#tk-tkt{min-width:150px}
 .tk-h1{margin:0}
 .tk-h1 select{font:inherit;font-size:var(--fs-h1);font-weight:600;letter-spacing:-.02em;color:var(--fg);background:transparent;border:0;border-bottom:2px dashed var(--line-strong);border-radius:0;height:auto;padding:2px 34px 4px 0;cursor:pointer;max-width:100%;appearance:none;-webkit-appearance:none;
   background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 14px) 55%,calc(100% - 8px) 55%;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
@@ -560,8 +562,14 @@ tr.oc-det:hover>td{background:var(--surface-2)}
   </section>
 
   <div class="page-h" data-tab="tk">
-    <div><div class="eyebrow" id="tk-eyebrow">Ambiente compartilhado SOMA × BioNutriLab</div><h1 id="tk-title" class="tk-h1"><label for="tk-sel" class="tk-sr">Selecionar lote ou ticket</label><select id="tk-sel" title="Selecionar lote ou ticket"></select></h1><p>Uma visão por ticket: acordo comercial, programação semanal de produção, conferência, entregas, pagamentos e documentos. Quantidades e datas vêm do <b>controle de lote</b> (todas as linhas com o mesmo nº de ticket = 1 ticket); comprovantes vêm da pasta do ticket no Drive.</p><p class="note" id="tk-src" style="margin-top:4px"></p></div>
+    <div><div class="eyebrow" id="tk-eyebrow">Ambiente compartilhado SOMA × BioNutriLab</div><h1 id="tk-title">Ticket</h1><p>Uma visão por ticket: acordo comercial, programação semanal de produção, conferência, entregas, pagamentos e documentos. Quantidades e datas vêm do <b>controle de lote</b> (todas as linhas com o mesmo nº de ticket = 1 ticket); comprovantes vêm da pasta do ticket no Drive.</p></div>
     <span class="pill" id="tk-pill"></span>
+  </div>
+  <div class="bar" data-tab="tk" role="group" aria-label="Selecionar lote ou ticket">
+    <label class="chk">Lote <select id="tk-lote"></select></label>
+    <span class="tk-link" aria-hidden="true">⇄</span>
+    <label class="chk">Ticket <select id="tk-tkt"></select></label>
+    <span class="note" id="tk-src"></span>
   </div>
 
   <div class="alerts" id="tk-alerts" data-tab="tk"></div>
@@ -1440,48 +1448,69 @@ const TKDRIVE={"raiz": "https://drive.google.com/drive/folders/1TtIACsKnXLv3Wbfx
 const normT=v=>{const m=String(v??"").match(/\d+/);return m?+m[0]:null};
 const pad2=n=>String(n).padStart(2,"0");
 function tkRows(){
-  return (typeof LOTES0!=="undefined"?LOTES0:[]).map(r=>{const tc=Object.keys(r).find(k=>/ticket/i.test(k));const m=String(tc?r[tc]??"":"").match(/\d+/);const lt=normT(r["Lote"]);
-    const tk=m?String(+m[0]):(lt!=null?"L"+lt:null);const tkLabel=m?"Ticket #"+(+m[0]):"Lote "+lt;
-    return {tk,tkLabel,legacy:!m,lote:normT(r["Lote"]),fecha:gvDate(r["Fecha Despacho"]),ref:refOf(r["Producto"]),prod:r["Producto"]||"",qtd:+r["Cantidad"]||0,promessa:gvDate(r["Promesa de Entrega"]),est:estOC(r["Estado"]),aba:r["Aba"]||"",bodega:r["Bodega"]||"",nota:r["Nota"]||""}}).filter(r=>r.ref&&r.tk!=null);
+  return (typeof LOTES0!=="undefined"?LOTES0:[]).map(r=>{const tc=Object.keys(r).find(k=>/ticket/i.test(k));const m=String(tc?r[tc]??"":"").match(/\d+/);
+    return {tnum:m?String(+m[0]):null,lote:normT(r["Lote"]),fecha:gvDate(r["Fecha Despacho"]),ref:refOf(r["Producto"]),prod:r["Producto"]||"",qtd:+r["Cantidad"]||0,promessa:gvDate(r["Promesa de Entrega"]),est:estOC(r["Estado"]),aba:r["Aba"]||"",bodega:r["Bodega"]||"",nota:r["Nota"]||""}}).filter(r=>r.ref&&(r.tnum||r.lote!=null));
 }
 function tkHasCol(){return (typeof LOTES0!=="undefined"?LOTES0:[]).some(r=>Object.keys(r).some(k=>/ticket/i.test(k)))}
-function tkSummary(id,R){
-  const rows=R.filter(r=>r.tk===id);const ds=rows.map(r=>r.fecha).filter(Boolean).sort();
-  const by=k=>rows.filter(r=>r.ref===k);const refs=[...new Set(rows.map(r=>r.ref))].sort((a,b)=>REFS.findIndex(x=>x[0]===a)-REFS.findIndex(x=>x[0]===b));
-  const ent=k=>by(k).filter(r=>r.est==="ok").reduce((a,r)=>a+r.qtd,0),tr=k=>by(k).filter(r=>r.est!=="ok").reduce((a,r)=>a+r.qtd,0);
-  const ini=ds[0]||null,fim=ds.at(-1)||null;const aberto=rows.some(r=>r.est!=="ok");
-  const pagFinal=fim?iso(addD(pd(fim),30)):null;const legacy=rows[0].legacy;const num=legacy?null:id;
-  return {id,label:rows[0].tkLabel,legacy,num,rows,refs,ent,tr,ini,fim,aberto,pagFinal,lotes:[...new Set(rows.map(r=>r.lote).filter(v=>v!=null))],oc:OCS_T[id]||null,comps:COMP0[id]||[],folder:TKDRIVE.tickets[legacy?id.slice(1):id]||null};
+/* resumo de um conjunto de linhas (por ticket ou por lote) */
+function tkSum(rows,by,v){
+  const ds=rows.map(r=>r.fecha).filter(Boolean).sort();
+  const refs=[...new Set(rows.map(r=>r.ref))].sort((a,b)=>REFS.findIndex(x=>x[0]===a)-REFS.findIndex(x=>x[0]===b));
+  const ent=k=>rows.filter(r=>r.ref===k&&r.est==="ok").reduce((a,r)=>a+r.qtd,0),tr=k=>rows.filter(r=>r.ref===k&&r.est!=="ok").reduce((a,r)=>a+r.qtd,0);
+  const tks=[...new Set(rows.map(r=>r.tnum).filter(Boolean))],lotes=[...new Set(rows.map(r=>r.lote).filter(x=>x!=null))].sort((a,b)=>a-b);
+  const ini=ds[0]||null,fim=ds.at(-1)||null,aberto=rows.some(r=>r.est!=="ok");
+  const tk1=tks.length===1?tks[0]:null;const key=by==="t"?v:(tk1||"L"+v);
+  const oc=(tk1&&OCS_T[tk1])||(by==="l"&&OCS_T["L"+v])||null;
+  const comps=(tk1&&COMP0[tk1])||(by==="l"&&COMP0["L"+v])||[];
+  const folder=(tk1&&TKDRIVE.tickets[tk1])||(by==="l"&&TKDRIVE.tickets[String(v)])||null;
+  const tkLabel=tk1?"Ticket #"+tk1:tks.length>1?"Tickets "+tks.map(x=>"#"+x).join(", "):"Lote "+lotes.join(", ");
+  return {by,v,key,rows,refs,ent,tr,ini,fim,aberto,pagFinal:fim?iso(addD(pd(fim),30)):null,tks,lotes,tk1,oc,comps,folder,tkLabel,legacy:!tks.length};
 }
-let tkCur="ex";try{tkCur=localStorage.getItem("soma-tk2")||"ex"}catch(_){}
+/* seleção integrada: escolher um lote mostra o(s) ticket(s) dele e vice-versa */
+let tkState={by:"ex"};try{tkState=JSON.parse(localStorage.getItem("soma-tk3"))||{by:"ex"}}catch(_){}
+const tkSave=()=>{try{localStorage.setItem("soma-tk3",JSON.stringify(tkState))}catch(_){}};
 function renderTK(){
   if(!$("#tk-kpis"))return;
-  const R=tkRows();const S0=[...new Set(R.map(r=>r.tk))].map(id=>tkSummary(id,R));const S=S0.sort((a,b)=>(b.fim||"").localeCompare(a.fim||"")||(a.legacy-b.legacy));const ids=S.map(t=>t.id);
-  // tabela de todos os tickets
-  const N=k=>REFS.find(r=>r[0]===k)[1];
+  const R=tkRows();
+  const lotes=[...new Set(R.map(r=>r.lote).filter(x=>x!=null))].sort((a,b)=>b-a);
+  const tks=[...new Set(R.map(r=>r.tnum).filter(Boolean))];
+  const sumT=t=>tkSum(R.filter(r=>r.tnum===t),"t",t),sumL=l=>tkSum(R.filter(r=>r.lote===l),"l",l);
+  const ST=tks.map(sumT).sort((a,b)=>(b.fim||"").localeCompare(a.fim||""));
+  if(tkState.by==="t"&&!tks.includes(tkState.v))tkState={by:"ex"};
+  if(tkState.by==="l"&&!lotes.includes(+tkState.v))tkState={by:"ex"};
+  const ex=tkState.by==="ex";
+  const cur=ex?null:tkState.by==="t"?sumT(tkState.v):sumL(+tkState.v);
+
+  // seletores (o outro campo acompanha automaticamente)
+  const op=(v,l,sel)=>`<option value="${ocEsc(v)}" ${sel?"selected":""}>${ocEsc(l)}</option>`;
+  let lv,tv,lExtra="",tExtra="";
+  if(ex){lv="ex";tv="ex"}
+  else if(tkState.by==="l"){lv=String(tkState.v);tv=cur.tk1||(cur.tks.length>1?"_multi":"_none");if(cur.tks.length>1)tExtra=op("_multi",`vários (${cur.tks.map(x=>"#"+x).join(", ")})`,true);}
+  else{tv=tkState.v;lv=cur.lotes.length===1?String(cur.lotes[0]):(cur.lotes.length>1?"_multi":"_none");if(cur.lotes.length>1)lExtra=op("_multi",`vários (${cur.lotes.join(", ")})`,true);}
+  $("#tk-lote").innerHTML=op("_none","— sem lote —",lv==="_none")+lExtra+op("ex","Lote 9 (modelo)",lv==="ex")+lotes.map(l=>op(String(l),"Lote "+l,lv===String(l))).join("");
+  $("#tk-tkt").innerHTML=op("_none","— sem ticket —",tv==="_none")+tExtra+op("ex","#234422 (modelo)",tv==="ex")+ST.map(t=>op(t.v,"#"+t.v+(t.oc?" · OC #"+t.oc.numero:""),tv===t.v)).join("");
+  $("#tk-lote").onchange=e=>{const v=e.target.value;if(v==="_none"||v==="_multi")return renderTK();tkState=v==="ex"?{by:"ex"}:{by:"l",v:+v};tkSave();renderTK()};
+  $("#tk-tkt").onchange=e=>{const v=e.target.value;if(v==="_none"||v==="_multi")return renderTK();tkState=v==="ex"?{by:"ex"}:{by:"t",v};tkSave();renderTK()};
+
+  // tabela integrada no fim: tickets e lotes antigos
+  const linhas=ST.concat(lotes.filter(l=>!R.some(r=>r.lote===l&&r.tnum)).map(sumL));
   $("#tk-all").innerHTML=`<tr><th>Ticket</th><th>Lote(s)</th><th>Linhas</th><th>Piña</th><th>Naranja</th><th>Frutos Rojos</th><th>Em trânsito</th><th>Início</th><th>Fechamento</th><th>Pagamento final</th><th>Comprovantes</th><th></th></tr>`+
-    S.map(t=>`<tr><td><b>${ocEsc(t.label)}</b>${t.legacy?'<br><span class="note">sem nº de ticket</span>':""}</td><td>${t.lotes.join(", ")||"—"}</td><td class="num">${t.rows.length}</td>${["p","n","f"].map(k=>`<td class="num">${t.ent(k)?fmt(t.ent(k)):"—"}</td>`).join("")}<td class="num">${["p","n","f","s"].reduce((a,k)=>a+t.tr(k),0)?fmt(["p","n","f","s"].reduce((a,k)=>a+t.tr(k),0)):"—"}</td><td class="num">${t.ini?dm(t.ini):"—"}</td><td class="num">${t.fim?dm(t.fim):"—"}${t.aberto?'<br><span class="note">provisório</span>':""}</td><td class="num">${t.pagFinal?dfull(t.pagFinal):"—"}</td><td>${t.comps.length?`<span class="pill good">${t.comps.length}</span>`:'<span class="note">—</span>'}</td><td><button class="oc-btn" type="button" data-tk="${ocEsc(t.id)}">Abrir</button></td></tr>`).join("")+
-    `<tr><td colspan="12" class="note" style="white-space:normal">${tkHasCol()?"Agrupado pela coluna Ticket do controle de lote.":"O controle de lote ainda não tem a coluna Ticket — por enquanto ticket = nº do lote. Quando a coluna existir, o agrupamento passa a ser por ela."}</td></tr>`;
-  $("#tk-all").querySelectorAll("button[data-tk]").forEach(b=>b.onclick=()=>{tkCur=b.dataset.tk;try{localStorage.setItem("soma-tk2",tkCur)}catch(_){}renderTK();$("#tk-title").scrollIntoView({block:"start",behavior:"smooth"})});
-  // seletor
-  const lab=t=>t.label+(t.oc?" · OC #"+t.oc.numero:"");
-  const novos=S.filter(t=>!t.legacy),antigos=S.filter(t=>t.legacy);
-  const opts=[["ex","Ticket #234422 · OC #223492 (modelo)"]].concat(S.map(t=>[t.id,lab(t)]));
-  if(!tkCur||!opts.some(o=>o[0]===tkCur))tkCur="ex";
-  const op=(v,l)=>`<option value="${ocEsc(v)}" ${v===tkCur?"selected":""}>${ocEsc(l)}</option>`;
-  $("#tk-sel").innerHTML=`<optgroup label="Tickets">${novos.map(t=>op(t.id,lab(t))).join("")}${op("ex","Ticket #234422 · OC #223492 (modelo)")}</optgroup>`+(antigos.length?`<optgroup label="Lotes já criados">${antigos.map(t=>op(t.id,lab(t))).join("")}</optgroup>`:"");
-  $("#tk-sel").onchange=e=>{tkCur=e.target.value;try{localStorage.setItem("soma-tk2",tkCur)}catch(_){}renderTK()};
-  const ex=tkCur==="ex";
+    linhas.map(t=>`<tr><td><b>${t.tks.length?t.tks.map(x=>"#"+x).join(", "):"—"}</b></td><td>${t.lotes.length?t.lotes.map(l=>"Lote "+l).join(", "):"—"}</td><td class="num">${t.rows.length}</td>${["p","n","f"].map(k=>`<td class="num">${t.ent(k)?fmt(t.ent(k)):"—"}</td>`).join("")}<td class="num">${["p","n","f","s"].reduce((a,k)=>a+t.tr(k),0)?fmt(["p","n","f","s"].reduce((a,k)=>a+t.tr(k),0)):"—"}</td><td class="num">${t.ini?dm(t.ini):"—"}</td><td class="num">${t.fim?dm(t.fim):"—"}${t.aberto?'<br><span class="note">provisório</span>':""}</td><td class="num">${t.pagFinal?dfull(t.pagFinal):"—"}</td><td>${t.comps.length?`<span class="pill good">${t.comps.length}</span>`:'<span class="note">—</span>'}</td><td><button class="oc-btn" type="button" data-by="${t.by}" data-v="${ocEsc(t.v)}">Abrir</button></td></tr>`).join("")+
+    `<tr><td colspan="12" class="note" style="white-space:normal">${tkHasCol()?"Lote e ticket vêm das colunas Lote e Ticket do controle de lote; linhas com o mesmo nº de ticket = 1 ticket.":"O controle de lote ainda não tem a coluna Ticket — por enquanto só aparecem os lotes. Quando a coluna existir, os tickets entram aqui ligados aos seus lotes."}</td></tr>`;
+  $("#tk-all").querySelectorAll("button[data-by]").forEach(b=>b.onclick=()=>{tkState={by:b.dataset.by,v:b.dataset.by==="l"?+b.dataset.v:b.dataset.v};tkSave();renderTK();$("#tk-title").scrollIntoView({block:"start",behavior:"smooth"})});
+
   $("#tk-pill").className="pill "+(ex?"warn":"good");$("#tk-pill").textContent=ex?"Exemplo com dados fictícios":"Dados reais · controle de lote";
   $("#tk-eyebrow").textContent=ex?"Exemplo · ambiente compartilhado SOMA × BioNutriLab":"Ambiente compartilhado SOMA × BioNutriLab";
-  $("#tk-src").textContent=ex?"Exemplo para validar o modelo — dados fictícios.":`Fonte: controle de lote (${META.lotes_at||META.atualizado}) · comprovantes: pasta Comprovantes de pagamento / ${S.find(t=>t.id===tkCur)?.label||""}`;
-  if(ex)renderTKView(TK0,true);else renderTKView(tkFromSummary(S.find(t=>t.id===tkCur)),false);
+  $("#tk-src").textContent=ex?"Modelo para validar — dados fictícios.":`Fonte: controle de lote (${META.lotes_at||META.atualizado})`;
+  if(ex){renderTKView(TK0,true);$("#tk-title").textContent="Ticket #234422 · Lote 9 · OC #223492"}
+  else{const T=tkFromSummary(cur);renderTKView(T,false);
+    $("#tk-title").textContent=[cur.tks.length?cur.tks.map(x=>"Ticket #"+x).join(" + "):null,cur.lotes.length?"Lote "+cur.lotes.join(", "):null,cur.oc?"OC #"+cur.oc.numero:null].filter(Boolean).join(" · ")}
 }
 /* converte o resumo real no mesmo formato do exemplo */
 function tkFromSummary(t){
   const o=t.oc;const N={p:"Soma Sculpt Piña",n:"Soma Sculpt Naranja",f:"Soma Sculpt Frutos Rojos",s:"Shaker Termo"};
   const itens=o?o.itens:t.refs.map(k=>({sku:"",ref:k,nome:N[k],qtd:null,unit:null}));
-  return {real:true,ticket:t.num||t.label,tkLabel:t.label,legacy:t.legacy,titulo:t.label+(t.legacy?" (antes do controle por ticket)":"")+(o?" · OC #"+o.numero:""),lote:t.lotes.join(", "),oc:o?o.numero:null,orc:o?o.orc:null,fornecedor:o?o.fornecedor:"BioNutriLab",cliente:"SOMA GROUP S.A.S",
+  return {real:true,ticket:t.tk1||t.tkLabel,tkLabel:t.tkLabel,legacy:t.legacy,lote:t.lotes.join(", "),oc:o?o.numero:null,orc:o?o.orc:null,fornecedor:o?o.fornecedor:"BioNutriLab",cliente:"SOMA GROUP S.A.S",
     emissao_orc:o?o.emissao_orc:null,emissao_oc:o?o.emissao:null,entrega_acordada:o?o.entrega_acordada:null,modalidade:o?o.modalidade:null,comprador:o?o.comprador:null,
     condicao:o?o.condicao:null,antecipo_pct:o?o.antecipo_pct??.5:.5,prazo_saldo:30,iva:o?o.iva??.19:.19,itens:itens.map(i=>({...i,nome:i.nome||N[i.ref]})),
     semanas:[],entregas:t.rows.map(r=>({fecha:r.fecha,ref:r.ref,qtd:r.qtd,est:r.est,doc:[r.aba,r.bodega,r.nota].filter(Boolean).join(" · ")||"—"})),
