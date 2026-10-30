@@ -393,6 +393,14 @@ tr.oc-det:hover>td{background:var(--surface-2)}
 /* ---------- aba de exemplo: Ticket · BioNutriLab ---------- */
 .tk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:6px 20px;font-size:12.5px}
 .tk-grid div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:5px 0}
+.tk-h1{margin:0}
+.tk-h1 select{font:inherit;font-size:var(--fs-h1);font-weight:600;letter-spacing:-.02em;color:var(--fg);background:transparent;border:0;border-bottom:2px dashed var(--line-strong);border-radius:0;height:auto;padding:2px 34px 4px 0;cursor:pointer;max-width:100%;appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 14px) 55%,calc(100% - 8px) 55%;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+.tk-h1 select:hover{border-bottom-color:var(--accent)}
+.tk-h1 select:focus-visible{outline:none;border-bottom-color:var(--accent);box-shadow:0 3px 0 -1px color-mix(in srgb,var(--accent) 35%,transparent)}
+.tk-h1 option,.tk-h1 optgroup{font-size:14px;font-weight:400;color:var(--fg);background:var(--surface)}
+.tk-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:520px){.tk-h1 select{font-size:19px}}
 .tk-grid span{color:var(--muted)}.tk-grid b{text-align:right}
 .tk-grid div.empty{display:block;text-align:center;border:1px dashed var(--line-strong);padding:18px}
 .tk-rule{border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);background:var(--accent-soft);border-radius:var(--r);padding:12px 14px;font-size:13px;display:grid;gap:4px}
@@ -552,12 +560,8 @@ tr.oc-det:hover>td{background:var(--surface-2)}
   </section>
 
   <div class="page-h" data-tab="tk">
-    <div><div class="eyebrow" id="tk-eyebrow">Ambiente compartilhado SOMA × BioNutriLab</div><h1 id="tk-title">Ticket</h1><p>Uma visão por ticket: acordo comercial, programação semanal de produção, conferência, entregas, pagamentos e documentos. Quantidades e datas vêm do <b>controle de lote</b> (todas as linhas com o mesmo nº de ticket = 1 ticket); comprovantes vêm da pasta do ticket no Drive.</p></div>
+    <div><div class="eyebrow" id="tk-eyebrow">Ambiente compartilhado SOMA × BioNutriLab</div><h1 id="tk-title" class="tk-h1"><label for="tk-sel" class="tk-sr">Selecionar lote ou ticket</label><select id="tk-sel" title="Selecionar lote ou ticket"></select></h1><p>Uma visão por ticket: acordo comercial, programação semanal de produção, conferência, entregas, pagamentos e documentos. Quantidades e datas vêm do <b>controle de lote</b> (todas as linhas com o mesmo nº de ticket = 1 ticket); comprovantes vêm da pasta do ticket no Drive.</p><p class="note" id="tk-src" style="margin-top:4px"></p></div>
     <span class="pill" id="tk-pill"></span>
-  </div>
-  <div class="bar" data-tab="tk">
-    <label class="chk">Ticket <select id="tk-sel"></select></label>
-    <span class="note" id="tk-src"></span>
   </div>
 
   <div class="alerts" id="tk-alerts" data-tab="tk"></div>
@@ -1460,9 +1464,12 @@ function renderTK(){
     `<tr><td colspan="12" class="note" style="white-space:normal">${tkHasCol()?"Agrupado pela coluna Ticket do controle de lote.":"O controle de lote ainda não tem a coluna Ticket — por enquanto ticket = nº do lote. Quando a coluna existir, o agrupamento passa a ser por ela."}</td></tr>`;
   $("#tk-all").querySelectorAll("button[data-tk]").forEach(b=>b.onclick=()=>{tkCur=b.dataset.tk;try{localStorage.setItem("soma-tk2",tkCur)}catch(_){}renderTK();$("#tk-title").scrollIntoView({block:"start",behavior:"smooth"})});
   // seletor
-  const opts=[["ex","Modelo · Ticket #234422 (exemplo)"]].concat(S.map(t=>[t.id,`${t.label} · controle de lote`]));
+  const lab=t=>t.label+(t.oc?" · OC #"+t.oc.numero:"");
+  const novos=S.filter(t=>!t.legacy),antigos=S.filter(t=>t.legacy);
+  const opts=[["ex","Ticket #234422 · OC #223492 (modelo)"]].concat(S.map(t=>[t.id,lab(t)]));
   if(!tkCur||!opts.some(o=>o[0]===tkCur))tkCur="ex";
-  $("#tk-sel").innerHTML=opts.map(([v,l])=>`<option value="${v}" ${v===tkCur?"selected":""}>${l}</option>`).join("");
+  const op=(v,l)=>`<option value="${ocEsc(v)}" ${v===tkCur?"selected":""}>${ocEsc(l)}</option>`;
+  $("#tk-sel").innerHTML=`<optgroup label="Tickets">${novos.map(t=>op(t.id,lab(t))).join("")}${op("ex","Ticket #234422 · OC #223492 (modelo)")}</optgroup>`+(antigos.length?`<optgroup label="Lotes já criados">${antigos.map(t=>op(t.id,lab(t))).join("")}</optgroup>`:"");
   $("#tk-sel").onchange=e=>{tkCur=e.target.value;try{localStorage.setItem("soma-tk2",tkCur)}catch(_){}renderTK()};
   const ex=tkCur==="ex";
   $("#tk-pill").className="pill "+(ex?"warn":"good");$("#tk-pill").textContent=ex?"Exemplo com dados fictícios":"Dados reais · controle de lote";
@@ -1498,7 +1505,7 @@ function renderTKView(T,isEx){
   else{done=T.itens.every(i=>prodRef(i.ref,true)>=i.qtd)&&T.semanas.every(w=>w.status==="Fechada");ini=T.entregas.map(e=>e.fecha).sort()[0];const lc=T.semanas.map(w=>w.conf).filter(Boolean).sort().at(-1);fim=done?lc:null;vence=fim?iso(addD(pd(fim),T.prazo_saldo)):null}
   const pAnt=T.pagamentos.filter(p=>/antecip/i.test(p.tipo)&&p.data).reduce((a,p)=>a+p.valor,0);const pSal=T.pagamentos.filter(p=>/saldo/i.test(p.tipo)&&p.data).reduce((a,p)=>a+p.valor,0);
   const pTot=T.pagamentos.filter(p=>p.data||T.real).reduce((a,p)=>a+(p.valor||0),0);
-  $("#tk-title").textContent=T.titulo;
+  
   const empty=(sel,msg)=>{$(sel).innerHTML=`<div class="empty">${msg}</div>`};
 
   // alertas
