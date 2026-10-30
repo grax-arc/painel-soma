@@ -389,6 +389,32 @@ tr.oc-det:hover>td{background:var(--surface-2)}
 .ocfields span{color:var(--muted)}
 @media (max-width:760px){.oc-panel{grid-template-columns:1fr;position:sticky;left:0;width:calc(100vw - 86px)}tr.oc-det>td{padding:10px}}
 #oc-lotes td{vertical-align:top}#oc-lotes td.num{padding-top:12px}
+
+/* ---------- aba de exemplo: Ticket · BioNutriLab ---------- */
+.tk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:6px 20px;font-size:12.5px}
+.tk-grid div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:5px 0}
+.tk-grid span{color:var(--muted)}.tk-grid b{text-align:right}
+.tk-rule{border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);background:var(--accent-soft);border-radius:var(--r);padding:12px 14px;font-size:13px;display:grid;gap:4px}
+.tk-rule b{color:var(--fg)}
+.tk-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+.tk-steps div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2);font-size:12px;display:grid;gap:2px;position:relative}
+.tk-steps div.ok{border-color:color-mix(in srgb,var(--good) 45%,transparent)}
+.tk-steps div.now{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.tk-steps span{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.tk-steps b{font-family:var(--mono);font-size:12.5px;font-weight:500}
+.tk-wk{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.tk-wk>summary{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 12px;border-radius:0}
+.tk-wk>summary .t{font-weight:600}
+.tk-wk>summary .s{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.tk-wk[open]>summary{border-bottom:1px solid var(--line)}
+.tk-wk .tbl{border:0;border-radius:0}
+.tk-wk td.neg{color:var(--crit)}.tk-wk td.pos{color:var(--good)}
+.tk-tree{display:grid;gap:8px}
+.tk-tree .fd{border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2);padding:10px 12px;display:grid;gap:6px}
+.tk-tree .fd>b{display:flex;align-items:center;gap:8px;font-size:13px}
+.tk-tree .fd>b::before{content:"";width:14px;height:11px;border-radius:2px;background:var(--warn);opacity:.75;flex:none}
+.tk-tree ul{margin:0;padding-left:22px;display:grid;gap:4px;font-size:12.5px}
+.tk-tree li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 </style>
 
 <script>try{document.documentElement.dataset.theme=localStorage.getItem("ruptura-theme")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
@@ -399,6 +425,7 @@ tr.oc-det:hover>td{background:var(--surface-2)}
       <button id="tab-ruptura" role="tab" data-tab="ruptura" class="on"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 4"/><path d="M3 21h18"/></svg>Ruptura e vendas<span class="badge" id="nb-rup"></span></button>
       <button id="tab-lotes" role="tab" data-tab="lotes"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Controle de lotes<span class="badge" id="nb-lot"></span></button>
       <button id="tab-oc" role="tab" data-tab="oc"><svg viewBox="0 0 24 24"><path d="M9 4h6v3H9z"/><path d="M15 5h3v16H6V5h3"/><path d="M9 13l2 2 4-4"/></svg>Lotes · OC<span class="badge tst">teste</span></button>
+      <button id="tab-tk" role="tab" data-tab="tk"><svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M10 9h4M10 13h4"/></svg>Ticket BNL<span class="badge tst">exemplo</span></button>
       <button id="tab-cedi" role="tab" data-tab="cedi"><svg viewBox="0 0 24 24"><path d="M3 21V8l4-4h10l4 4v13"/><path d="M3 12h18M9 21v-6h6v6"/></svg>Ruptura por CEDI<span class="badge" id="nb-cedi"></span></button>
       <button id="tab-dist" role="tab" data-tab="dist"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v4M12 11l-6 6M12 11l6 6"/></svg>Distribuição<span class="badge"></span></button>
       <button id="tab-faturas" role="tab" data-tab="faturas"><svg viewBox="0 0 24 24"><path d="M6 3h9l5 5v13H6z"/><path d="M15 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>Faturas Melonn<span class="badge" id="nb-fat"></span></button>
@@ -519,6 +546,69 @@ tr.oc-det:hover>td{background:var(--surface-2)}
         <div>2. Os despachos continuam vindo da planilha de controle de despacho (print ou arquivo no chat), com o número do lote.</div>
         <div>3. PDF da OC e comprovantes de pagamento vão para a pasta do lote no Drive: <a id="oc-drive" href="#" target="_blank" rel="noopener">Painel SOMA — Lotes (ordens de compra e comprovantes) ↗</a>. Avise no chat quando subir um comprovante (antecipo ou saldo) para marcar como pago.</div>
         <div>4. Regras: saldo de 50% só libera quando todas as referências do lote chegam a 100%; vence 30 dias depois da finalização. Se uma OC nova começa e a anterior não está 100%, o painel sinaliza o pagamento travado.</div>
+      </div>
+    </details>
+  </section>
+
+  <div class="page-h" data-tab="tk">
+    <div><div class="eyebrow">Exemplo · ambiente compartilhado SOMA × BioNutriLab</div><h1 id="tk-title">Ticket</h1><p>Uma visão por ticket (= lote): acordo comercial, programação semanal de produção, conferência, entregas, pagamentos e documentos. Tudo baseado em documento — o que não está no orçamento e na OC não vale.</p></div>
+    <span class="pill warn">Exemplo com dados fictícios</span>
+  </div>
+  <div class="alerts" id="tk-alerts" data-tab="tk"></div>
+  <div class="kpis five" id="tk-kpis" data-tab="tk"></div>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>Linha do tempo do ticket</h2><p>Do orçamento ao pagamento final.</p></div>
+    <div class="tk-steps" id="tk-steps"></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>1 · Acordo comercial</h2><p>Copiado do orçamento da BioNutriLab e da ordem de compra. É a única base para valores, quantidades e forma de pagamento.</p></div>
+    <div class="tk-grid" id="tk-acordo"></div>
+    <div class="tbl"><table id="tk-itens"></table></div>
+    <div class="tk-rule" id="tk-regras"></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>2 · Programação semanal de produção</h2><p>Nós enviamos a proposta (programado); a BioNutriLab devolve no fim da semana com produzido real, desvio e causa. A semana só conta quando está <b>Fechada</b> (conferida pelas duas partes).</p></div>
+    <div id="tk-semanas" style="display:grid;gap:10px"></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>3 · Conferência por referência</h2><p>Contratado × programado × produzido (semanas fechadas) × entregue.</p></div>
+    <div class="tbl"><table id="tk-conf"></table></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>4 · Entregas</h2><p>Despachos do ticket para a Melonn, com o documento de cada entrega.</p></div>
+    <div class="tbl"><table id="tk-ent" class="sheet"></table></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>5 · Pagamentos</h2><p>Cada comprovante numa linha — antecipo pode ser dividido em parcelas. Data do pagamento final calculada pela regra do acordo.</p></div>
+    <div class="tbl"><table id="tk-pag"></table></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>6 · Solicitações e alterações</h2><p>Qualquer pedido fora do acordo é registrado aqui e só vale com documento assinado pelas duas partes.</p></div>
+    <div class="tbl"><table id="tk-sol"></table></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <div class="sec-h"><h2>7 · Documentos do ticket (Drive)</h2><p>Uma pasta por ticket, com subpastas fixas. Link único para Grax, SOMA e BioNutriLab.</p></div>
+    <div class="tk-tree" id="tk-docs"></div>
+  </section>
+
+  <section class="card" data-tab="tk">
+    <details><summary>Verificação de insumos / embalagem (opcional)</summary>
+      <div class="tbl" style="margin-top:8px"><table id="tk-ins"></table></div>
+    </details>
+    <details><summary>Como funciona na versão real</summary>
+      <div class="howto" style="margin-top:8px">
+        <div>• A versão real fica numa <b>planilha Google</b> compartilhada por e-mail (não neste painel, que é link aberto), com uma pasta no Drive por ticket.</div>
+        <div>• BioNutriLab: comenta na planilha e edita só as colunas de produzido real, desvio e causa; sobe arquivos na pasta 02 · Produção.</div>
+        <div>• Grax/SOMA: lança acordo, programação proposta, entregas e comprovantes.</div>
+        <div>• Toda sexta: fechamento da semana → relatório semanal gerado a partir da planilha.</div>
       </div>
     </details>
   </section>
@@ -1132,7 +1222,7 @@ function render(){
   $("#daily").innerHTML=`<tr><th>Dia</th><th>Pedidos</th><th>Itens</th><th>Piña</th><th>Naranja</th><th>Shaker</th></tr>`+rows.map(r=>`<tr><td>${dmw(r.d)}${r.d===META.parcial?" <span class='note'>(parcial)</span>":""}</td><td class="num">${fmt(r.o)}</td><td class="num">${fmt(r.i)}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.n)}</td><td class="num">${fmt(r.s)}</td></tr>`).join("")+`<tr><td><b>Total</b></td><td class="num"><b>${fmt(ord)}</b></td><td class="num"><b>${fmt(it)}</b></td><td class="num"><b>${fmt(tp)}</b></td><td class="num"><b>${fmt(tn)}</b></td><td class="num"><b>${fmt(ts)}</b></td></tr>`;
 }
 render();
-showTab(["ruptura","lotes","oc","cedi","dist","faturas"].includes(h0)?h0:"ruptura");
+showTab(["ruptura","lotes","oc","tk","cedi","dist","faturas"].includes(h0)?h0:"ruptura");
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",render);
 new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 
@@ -1313,5 +1403,91 @@ $("#oc-wk-ex").onchange=e=>{ocStore.wkex=e.target.checked;ocSave();renderOC()};
 $("#oc-copy").onclick=async()=>{const t=$("#oc-rep").textContent;try{await navigator.clipboard.writeText(t);$("#oc-copy-st").textContent="Copiado."}catch(_){const r=document.createRange();r.selectNodeContents($("#oc-rep"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("#oc-copy-st").textContent="Selecionado — use Ctrl+C."}};
 {const _rl=renderLotes;renderLotes=function(){_rl.apply(this,arguments);try{renderOC()}catch(e){console.error(e)}}}
 try{renderOC()}catch(e){console.error(e)}
+
+/* ===================== EXEMPLO · Ticket BioNutriLab ===================== */
+const TK0={ticket:"09",lote:9,oc:"223492",orc:"COT-BNL-0912",fornecedor:"BioNutriLab (BELAB) · NIT 901611009",cliente:"SOMA GROUP S.A.S · NIT 902061730-1",
+ emissao_orc:"2026-07-20",emissao_oc:"2026-07-27",entrega_acordada:"2026-09-25",modalidade:"Recogida en proveedor (EXW)",comprador:"Leonan",
+ condicao:"50% antecipado + 50% em 30 dias após a finalização 100% da entrega",antecipo_pct:.5,prazo_saldo:30,iva:.19,
+ itens:[{sku:"SOM-PRD-001",ref:"n",nome:"Soma Sculpt Naranja",qtd:25000,unit:21449},{sku:"SOM-PRD-002",ref:"p",nome:"Soma Sculpt Piña",qtd:25000,unit:21449}],
+ semanas:[
+  {n:1,ini:"2026-08-31",fim:"2026-09-04",status:"Fechada",conf:"2026-09-05",dias:[["Lunes","2026-08-31","n",5000,5000,"",""],["Martes","2026-09-01","n",5000,4800,"Linha de produção","Parada de 1 h para ajuste da envasadora"],["Miércoles","2026-09-02","p",5000,5000,"",""],["Jueves","2026-09-03","p",5000,5000,"",""],["Viernes","2026-09-04","n",5000,5000,"",""]]},
+  {n:2,ini:"2026-09-07",fim:"2026-09-11",status:"Fechada",conf:"2026-09-12",dias:[["Lunes","2026-09-07","p",5000,5000,"",""],["Martes","2026-09-08","n",5000,5000,"",""],["Miércoles","2026-09-09","p",5000,4500,"Insumo / embalagem","Doypack chegou com atraso"],["Jueves","2026-09-10","n",5000,5000,"",""],["Viernes","2026-09-11","p",5000,5000,"",""]]},
+  {n:3,ini:"2026-09-14",fim:"2026-09-18",status:"Aguardando fechamento",conf:null,dias:[["Lunes","2026-09-14","n",200,null,"",""],["Lunes","2026-09-14","p",500,null,"",""]]}],
+ entregas:[{fecha:"2026-09-07",ref:"n",qtd:14800,est:"ok",doc:"Remisión 4471"},{fecha:"2026-09-07",ref:"p",qtd:10000,est:"ok",doc:"Remisión 4471"},{fecha:"2026-09-14",ref:"n",qtd:10000,est:"ok",doc:"Remisión 4502"},{fecha:"2026-09-14",ref:"p",qtd:14500,est:"ok",doc:"Remisión 4502"}],
+ pagamentos:[{tipo:"Antecipo",parcela:"1/2",valor:400000000,data:"2026-07-28",comp:true},{tipo:"Antecipo",parcela:"2/2",valor:238107750,data:"2026-08-05",comp:true},{tipo:"Saldo",parcela:"1/1",valor:638107750,data:null,comp:false}],
+ solicitacoes:[{data:"2026-09-15",por:"BioNutriLab",pedido:"Pagamento do saldo proporcional às entregas semanais",doc:"Nenhum",status:"Não aprovado",motivo:"Fora do acordo: orçamento e OC preveem saldo em 30 dias após a finalização 100%."},
+   {data:"2026-09-10",por:"Grax",pedido:"Adiantar 500 un. de Piña para a semana 2",doc:"Programação S2 revisada",status:"Aprovado",motivo:"Ajuste de programação, sem impacto no valor."}],
+ insumos:[["Doypack Naranja",25000,25000,"OK"],["Doypack Piña",25000,24500,"Faltam 500 — chegada 14/09"],["Tampa / zip",50000,50000,"OK"],["Etiqueta lote/validade",50000,50000,"OK"],["Caixa master (50 un.)",1000,1000,"OK"]]};
+
+function renderTK(){
+  if(!$("#tk-kpis"))return;const T=TK0;const N={p:"Piña",n:"Naranja",f:"Frutos Rojos"};
+  const bruto=T.itens.reduce((a,i)=>a+i.qtd*i.unit,0),total=bruto*(1+T.iva),ant=total*T.antecipo_pct,saldo=total-ant;
+  const con=T.itens.reduce((a,i)=>a+i.qtd,0);
+  const prodRef=(k,onlyClosed)=>T.semanas.filter(w=>!onlyClosed||w.status==="Fechada").reduce((a,w)=>a+w.dias.filter(d=>d[2]===k).reduce((x,d)=>x+(+d[4]||0),0),0);
+  const progRef=k=>T.semanas.reduce((a,w)=>a+w.dias.filter(d=>d[2]===k).reduce((x,d)=>x+d[3],0),0);
+  const pendRef=k=>T.semanas.filter(w=>w.status!=="Fechada").reduce((a,w)=>a+w.dias.filter(d=>d[2]===k).reduce((x,d)=>x+d[3],0),0);
+  const entRef=k=>T.entregas.filter(e=>e.ref===k&&e.est==="ok").reduce((a,e)=>a+e.qtd,0);
+  const prodC=T.itens.reduce((a,i)=>a+prodRef(i.ref,true),0),ent=T.itens.reduce((a,i)=>a+entRef(i.ref),0);
+  const done=T.itens.every(i=>prodRef(i.ref,true)>=i.qtd)&&T.semanas.every(w=>w.status==="Fechada");
+  const lastConf=T.semanas.map(w=>w.conf).filter(Boolean).sort().at(-1);const fin=done?lastConf:null;const vence=fin?iso(addD(pd(fin),T.prazo_saldo)):null;
+  const pAnt=T.pagamentos.filter(p=>p.tipo==="Antecipo"&&p.data).reduce((a,p)=>a+p.valor,0);const pSal=T.pagamentos.filter(p=>p.tipo==="Saldo"&&p.data).reduce((a,p)=>a+p.valor,0);
+  const pend=T.semanas.find(w=>w.status!=="Fechada");
+  $("#tk-title").textContent=`Ticket ${T.ticket} · Lote ${T.lote} · OC #${T.oc}`;
+
+  const al=[];
+  if(pend)al.push(["warn",`Semana ${pend.n} (${dm(pend.ini)}–${dm(pend.fim)}) aguardando a BioNutriLab devolver a programação com o produzido real. Sem o fechamento dela o ticket não finaliza.`]);
+  if(!done)al.push(["warn",`Saldo de ${cop(saldo)} travado: a data de pagamento final só existe depois da finalização 100% (última semana fechada) + ${T.prazo_saldo} dias.`]);
+  T.solicitacoes.filter(s=>/não aprov/i.test(s.status)).forEach(s=>al.push(["crit",`Solicitação fora do acordo registrada em ${dm(s.data)} (${ocEsc(s.por)}): “${ocEsc(s.pedido)}” — não aprovada, sem documento.`]));
+  $("#tk-alerts").innerHTML=al.map(([c,t])=>`<div class="alert ${c}" role="status"><span class="dot"></span><span>${c==="crit"?"Atenção: ":"Aviso: "}${t}</span></div>`).join("");
+
+  const K=[["Contratado",fmt(con)+" un.",T.itens.map(i=>`${N[i.ref]} ${fmt(i.qtd)}`).join(" · ")],
+    ["Produzido (semanas fechadas)",fmt(prodC)+" un.",`${f1(prodC/con*100)}% · ${fmt(con-prodC)} em conferência/faltante`],
+    ["Entregue",fmt(ent)+" un.",`${f1(ent/con*100)}% do contratado`],
+    ["Pago",cop(pAnt+pSal),`${f1((pAnt+pSal)/total*100)}% de ${cop(total)}`],
+    ["Pagamento final",vence?dfull(vence):"após finalização",vence?`saldo ${cop(saldo)}`:`${cop(saldo)} · 30 d após 100%`]];
+  $("#tk-kpis").innerHTML=K.map(([a,b,c])=>`<div class="kpi"><div class="eyebrow">${a}</div><div class="v">${b}</div><div class="s">${c}</div></div>`).join("");
+
+  const st=[["Orçamento BNL",dfull(T.emissao_orc),"ok"],["Ordem de compra",dfull(T.emissao_oc),"ok"],["Antecipo 50%",pAnt>=ant?"pago "+dm(T.pagamentos.filter(p=>p.tipo==="Antecipo").map(p=>p.data).sort().at(-1)):"pendente",pAnt>=ant?"ok":"now"]]
+    .concat(T.semanas.map(w=>[`Produção S${w.n}`,w.status==="Fechada"?"fechada "+dm(w.conf):w.status.toLowerCase(),w.status==="Fechada"?"ok":"now"]))
+    .concat([["Finalização 100%",fin?dfull(fin):"pendente",fin?"ok":""],["Saldo 50%",pSal?"pago":vence?"vence "+dm(vence):"travado",pSal?"ok":""]]);
+  $("#tk-steps").innerHTML=st.map(([a,b,c])=>`<div class="${c}"><span>${a}</span><b>${b}</b></div>`).join("");
+
+  $("#tk-acordo").innerHTML=[["Ticket / lote",`${T.ticket} / ${T.lote}`],["Orçamento BNL",T.orc+" · "+dfull(T.emissao_orc)],["Ordem de compra","#"+T.oc+" · "+dfull(T.emissao_oc)],["Fornecedor",T.fornecedor],["Faturar a",T.cliente],["Entrega acordada",dfull(T.entrega_acordada)],["Modalidade",T.modalidade],["Comprador",T.comprador],["Condição de pagamento",T.condicao]].map(([a,b])=>`<div><span>${a}</span><b>${ocEsc(b)}</b></div>`).join("");
+  $("#tk-itens").innerHTML=`<tr><th>SKU</th><th>Referência</th><th>Quantidade</th><th>Valor unitário</th><th>Subtotal (sem IVA)</th></tr>`+T.itens.map(i=>`<tr><td class="num">${i.sku}</td><td><span class="sw ${i.ref}"></span>${i.nome}</td><td class="num">${fmt(i.qtd)}</td><td class="num">${fmt(i.unit)}</td><td class="num">${fmt(i.qtd*i.unit)}</td></tr>`).join("")+
+    `<tr class="tot"><td>Total</td><td></td><td class="num">${fmt(con)}</td><td></td><td class="num">${fmt(bruto)}</td></tr><tr><td colspan="4">IVA ${Math.round(T.iva*100)}%</td><td class="num">${fmt(bruto*T.iva)}</td></tr><tr class="tot"><td colspan="4">Total geral (COP)</td><td class="num">${fmt(total)}</td></tr>`;
+  $("#tk-regras").innerHTML=`<b>Regras deste ticket (do documento)</b><div>• Antecipo: ${cop(ant)} (${Math.round(T.antecipo_pct*100)}%) — pode ser pago em parcelas, cada uma com comprovante.</div><div>• Saldo: ${cop(saldo)}, vence ${T.prazo_saldo} dias após a finalização 100% (última programação semanal fechada).</div><div>• Uma semana fecha quando a programação volta com o produzido real e é conferida pelas duas partes.</div><div>• Mudanças de valor, quantidade ou forma de pagamento só com documento aditivo assinado (aba 6).</div>`;
+
+  const CAUSA=c=>c?`<span class="pill warn">${ocEsc(c)}</span>`:"—";
+  $("#tk-semanas").innerHTML=T.semanas.map((w,i)=>{const tp=w.dias.reduce((a,d)=>a+d[3],0),tr=w.dias.reduce((a,d)=>a+(+d[4]||0),0),fechada=w.status==="Fechada";
+    return `<details class="tk-wk" ${i===T.semanas.length-1||!fechada?"open":""}><summary><span class="t">Semana ${w.n} · ${dm(w.ini)} → ${dm(w.fim)}</span><span class="note">programado ${fmt(tp)} · real ${fechada?fmt(tr):"—"}</span>
+      <span class="s"><span class="pill">📄 proposta enviada</span>${fechada?`<span class="pill">📄 devolvida BNL</span><span class="pill good">Fechada ${dm(w.conf)}</span>`:`<span class="pill warn">${w.status}</span>`}</span></summary>
+      <div class="tbl"><table><tr><th>Día</th><th>Fecha</th><th>SKU</th><th>Programado</th><th>Producido real</th><th>Desvío</th><th>Causa del desvío</th><th>Observación</th></tr>${w.dias.map(d=>{const dv=d[4]==null?null:d[4]-d[3];return `<tr><td>${d[0]}</td><td class="num">${dm(d[1])}</td><td><span class="sw ${d[2]}"></span>${N[d[2]]}</td><td class="num">${fmt(d[3])}</td><td class="num">${d[4]==null?'<span class="note">aguardando BNL</span>':fmt(d[4])}</td><td class="num ${dv<0?"neg":dv>0?"pos":""}">${dv==null?"—":dv===0?"0":(dv>0?"+":"")+fmt(dv)}</td><td>${CAUSA(d[5])}</td><td class="note">${ocEsc(d[6])||"—"}</td></tr>`}).join("")}
+      <tr class="tot"><td colspan="3">Total da semana</td><td class="num">${fmt(tp)}</td><td class="num">${fechada?fmt(tr):"—"}</td><td class="num">${fechada?(tr-tp===0?"0":fmt(tr-tp)):"—"}</td><td colspan="2"></td></tr></table></div></details>`}).join("");
+
+  $("#tk-conf").innerHTML=`<tr><th>Referência</th><th>Contratado</th><th>Programado</th><th>Produzido (fechado)</th><th>Em conferência</th><th>Entregue</th><th>Faltante</th><th>% produzido</th></tr>`+T.itens.map(i=>{const pc=prodRef(i.ref,true),pe=pendRef(i.ref),e=entRef(i.ref);
+    return `<tr><td><span class="sw ${i.ref}"></span>${i.nome}</td><td class="num">${fmt(i.qtd)}</td><td class="num">${fmt(progRef(i.ref))}</td><td class="num">${fmt(pc)}</td><td class="num">${pe?fmt(pe):"—"}</td><td class="num">${fmt(e)}</td><td class="num">${fmt(Math.max(0,i.qtd-pc))}</td><td>${ocProg({con:i.qtd,ent:pc,tr:pe})}</td></tr>`}).join("")+
+    `<tr class="tot"><td>Total</td><td class="num">${fmt(con)}</td><td class="num">${fmt(T.itens.reduce((a,i)=>a+progRef(i.ref),0))}</td><td class="num">${fmt(prodC)}</td><td class="num">${fmt(T.itens.reduce((a,i)=>a+pendRef(i.ref),0))}</td><td class="num">${fmt(ent)}</td><td class="num">${fmt(con-prodC)}</td><td>${ocProg({con,ent:prodC,tr:T.itens.reduce((a,i)=>a+pendRef(i.ref),0)})}</td></tr>`;
+
+  $("#tk-ent").innerHTML=`<tr><th>Fecha</th><th>Referência</th><th>Cantidad</th><th>Estado</th><th>Documento</th></tr>`+T.entregas.map(e=>`<tr><td class="num">${dfull(e.fecha)}</td><td><span class="sw ${e.ref}"></span>${N[e.ref]}</td><td class="num">${fmt(e.qtd)}</td><td><span class="est ${e.est==="ok"?"ok":"go"}">${e.est==="ok"?"Entregado":"En tránsito"}</span></td><td>📄 ${ocEsc(e.doc)}</td></tr>`).join("")+`<tr class="tot"><td>Total</td><td></td><td class="num">${fmt(ent)}</td><td colspan="2"></td></tr>`;
+
+  $("#tk-pag").innerHTML=`<tr><th>Tipo</th><th>Parcela</th><th>Valor</th><th>Vencimento / regra</th><th>Data paga</th><th>Comprovante</th><th>Status</th></tr>`+T.pagamentos.map(p=>{const venc=p.tipo==="Saldo"?(vence?dfull(vence):"30 d após finalização"):"na emissão da OC";
+    const stt=p.data?'<span class="pill good">Pago</span>':p.tipo==="Saldo"&&!done?'<span class="pill crit">🔒 Travado</span>':'<span class="pill warn">A pagar</span>';
+    return `<tr><td>${p.tipo}</td><td class="num">${p.parcela}</td><td class="num">${cop(p.valor)}</td><td>${venc}</td><td class="num">${p.data?dfull(p.data):"—"}</td><td>${p.comp?"📎 anexado":'<span class="note">—</span>'}</td><td>${stt}</td></tr>`}).join("")+
+    `<tr class="tot"><td colspan="2">Total pago</td><td class="num">${cop(pAnt+pSal)}</td><td colspan="2">de ${cop(total)}</td><td colspan="2">Saldo em aberto ${cop(total-pAnt-pSal)}</td></tr>`;
+
+  $("#tk-sol").innerHTML=`<tr><th>Data</th><th>Solicitado por</th><th>Pedido</th><th>Documento</th><th>Status</th><th>Motivo / base</th></tr>`+T.solicitacoes.map(s=>`<tr><td class="num">${dfull(s.data)}</td><td>${ocEsc(s.por)}</td><td style="white-space:normal;min-width:220px">${ocEsc(s.pedido)}</td><td>${ocEsc(s.doc)}</td><td><span class="pill ${/não/i.test(s.status)?"crit":"good"}">${ocEsc(s.status)}</span></td><td class="note" style="white-space:normal;min-width:240px">${ocEsc(s.motivo)}</td></tr>`).join("");
+
+  const folder=(t,items)=>`<div class="fd"><b>${t}</b><ul>${items.map(([n,ok])=>`<li><span>📄 ${n}</span><span class="pill ${ok?"good":"warn"}">${ok?"anexado":"pendente"}</span></li>`).join("")}</ul></div>`;
+  $("#tk-docs").innerHTML=`<div class="note">📁 SOMA × BioNutriLab — Produção e Pagamentos / <b>Ticket ${T.ticket} · Lote ${T.lote} · OC #${T.oc}</b> · <a href="${OCDRIVE}" target="_blank" rel="noopener">abrir no Drive ↗</a></div>`+
+    folder("01 · Acordo comercial",[["Orçamento BioNutriLab "+T.orc,true],["Ordem de compra #"+T.oc,true],["Aditivos assinados",false]])+
+    folder("02 · Produção",T.semanas.flatMap(w=>[[`Programação S${w.n} — proposta (Grax)`,true],[`Programação S${w.n} — fechada (BNL)`,w.status==="Fechada"]]))+
+    folder("03 · Comprovantes de pagamento",T.pagamentos.map(p=>[`${p.tipo} ${p.parcela} — ${cop(p.valor)}`,p.comp]))+
+    folder("04 · Entregas",[...new Set(T.entregas.map(e=>e.doc))].map(d=>[d,true]));
+
+  $("#tk-ins").innerHTML=`<tr><th>Insumo</th><th>Necessário</th><th>Disponível</th><th>Status</th></tr>`+T.insumos.map(r=>`<tr><td>${r[0]}</td><td class="num">${fmt(r[1])}</td><td class="num">${fmt(r[2])}</td><td><span class="pill ${r[3]==="OK"?"good":"warn"}">${r[3]}</span></td></tr>`).join("");
+}
+function tkAlign(){document.querySelectorAll('section[data-tab="tk"] table').forEach(t=>{const rows=[...t.rows];const h=rows[0];if(!h)return;const n=h.cells.length;const d=rows.find((r,i)=>i>0&&r.cells.length===n);
+  [...h.cells].forEach((th,i)=>{const num=!!(d&&d.cells[i]&&d.cells[i].classList.contains("num"));th.style.textAlign=num&&i>0?"right":"left";rows.slice(1).forEach(r=>{if(r.cells.length!==n)return;const c=r.cells[i];if(c&&!c.classList.contains("num"))c.style.textAlign="left"})})})}
+try{renderTK();tkAlign()}catch(e){console.error(e)}
 </script>
 </body></html>
