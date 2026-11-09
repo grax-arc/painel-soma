@@ -468,6 +468,7 @@ tr.oc-det:hover>td{background:var(--surface-2)}
 #pv-lots button.x{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--crit);border-radius:var(--r-sm);height:28px;width:28px;cursor:pointer;line-height:1}
 #pv-lots button.x:hover{background:var(--critbg)}
 .pv-bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+.pv-new{display:inline-flex;align-items:center;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);vertical-align:middle;margin-left:6px}
 .pv-ex{display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.06em;background:var(--warnbg);color:var(--warn);border:1px dashed color-mix(in srgb,var(--warn) 55%,transparent)}
 @media (max-width:760px){.pv-ctl input[type=number]{width:100%}.pv-ctl label{flex:1 1 140px}}
 </style>
@@ -478,7 +479,7 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <div class="brand"><div class="mark">S</div><div><div class="bname">SOMA CO</div><div class="bsub">Operações · Colômbia</div></div></div>
     <nav class="tabs" role="tablist" aria-label="Seções">
       <button id="tab-ruptura" role="tab" data-tab="ruptura" class="on"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 4"/><path d="M3 21h18"/></svg>Ruptura e vendas<span class="badge" id="nb-rup"></span></button>
-      <button id="tab-prev" role="tab" data-tab="prev"><svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M5 16l4-5 3 3 5-7 2 2"/><path d="M17 4h3v3"/></svg>Previsão · Produção<span class="badge tst">teste</span></button>
+      <button id="tab-rup2" role="tab" data-tab="rup2"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 4"/><path d="M3 21h18"/></svg>Ruptura e vendas<span class="badge tst">teste</span></button>
       <button id="tab-lotes" role="tab" data-tab="lotes"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Controle de lotes<span class="badge" id="nb-lot"></span></button>
       <button id="tab-oc" role="tab" data-tab="oc"><svg viewBox="0 0 24 24"><path d="M9 4h6v3H9z"/><path d="M15 5h3v16H6V5h3"/><path d="M9 13l2 2 4-4"/></svg>Lotes · OC<span class="badge tst">teste</span></button>
       <button id="tab-tk" role="tab" data-tab="tk"><svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M10 9h4M10 13h4"/></svg>Ticket BNL<span class="badge tst">teste</span></button>
@@ -499,9 +500,15 @@ tr.oc-det:hover>td{background:var(--surface-2)}
   <div class="page-h" data-tab="ruptura">
     <div><div class="eyebrow">Shopify · Melonn · Piña, Naranja e Shaker</div><h1>Ruptura e vendas</h1><p>Escolha o período de referência; ritmo de venda, cenários de ruptura e gráficos recalculam na hora.</p></div>
   </div>
-  <div class="alerts" id="alerts" data-tab="ruptura"></div>
 
-  <div class="bar" id="perbar" role="group" aria-label="Período" data-tab="ruptura,cedi">
+  <div class="page-h" data-tab="rup2">
+    <div><div class="eyebrow">Shopify · Melonn · Piña, Naranja e Shaker · cópia de teste</div><h1>Ruptura e vendas · teste</h1><p>Cópia da aba Ruptura e vendas com a previsão de estoque e produção incluída (marcada como <b>novo</b>) logo abaixo do Ponto de ruptura. A aba original Ruptura e vendas continua igual.</p></div>
+    <span class="pill warn">Cópia de teste · a aba original não foi alterada</span>
+  </div>
+
+  <div class="alerts" id="alerts" data-tab="ruptura,rup2"></div>
+
+  <div class="bar" id="perbar" role="group" aria-label="Período" data-tab="ruptura,cedi,rup2">
     <span class="eyebrow">Período</span>
     <div class="presets" id="presets"></div>
     <div class="dates">
@@ -511,9 +518,9 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <label class="chk"><input type="checkbox" id="inchoje"> incluir hoje (dia parcial)</label>
   </div>
 
-  <div class="kpis" id="kpis" data-tab="ruptura"></div>
+  <div class="kpis" id="kpis" data-tab="ruptura,rup2"></div>
 
-  <section class="card" data-tab="ruptura">
+  <section class="card" data-tab="ruptura,rup2">
     <div class="sec-h">
       <h2>Ponto de ruptura por SKU</h2>
       <p>Estoque disponível (Shopify, descontando pedidos já comprometidos) + em trânsito ÷ ritmo de venda do período selecionado.</p>
@@ -522,30 +529,11 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <div class="note">Cenários: <b>Média</b> = ritmo diário do período selecionado · <b>Pico</b> = média dos 3 dias mais fortes de todo o histórico (atualiza sozinho se vier um dia maior) · <b>Mínimo</b> = média dos 3 dias mais fracos dos últimos 30 dias. Pico e Mínimo não dependem do período; as datas que os definem aparecem em cada cenário. O trânsito vem dos lotes marcados “Em trânsito” abaixo; “Ajuste manual” é um extra salvo só neste navegador.</div>
   </section>
 
-  <section class="card" id="mel-sec" data-tab="melonn" hidden>
-    <div class="sec-h">
-      <h2>Estoque Melonn por bodega — reporte de inventário</h2>
-      <p id="mel-st">Baixe na Melonn: Reporte inventario → filtre <b>uma bodega</b> → Descargar reporte. Solte o arquivo aqui.</p>
-    </div>
-    <div class="fhead">
-      <label class="chk">Bodega do relatório <select id="mel-bod"><option>Bogotá</option><option>Medellín</option><option>Cali</option><option>Barranquilla</option></select></label>
-      <input type="file" id="mel-file" accept=".xlsx,.xls,.csv" disabled>
-      <span class="note">Lê no seu navegador os SKUs SOMAPINA, SOMANARANJA e SHAKER: disponível, reservada, alistada e esperada.</span>
-    </div>
-    <div class="tbl"><table id="mel-tab"></table></div>
-    <div class="note" id="mel-note">Quando existe leitura da Melonn para uma bodega, a <b>esperada</b> dela vira o trânsito daquele CEDI na projeção (substitui os lotes para fins de trânsito; os lotes continuam como registro da fábrica).</div>
-  </section>
+  <div class="alerts" id="pv-alerts" data-tab="rup2"></div>
 
-  
-  <div class="page-h" data-tab="prev">
-    <div><div class="eyebrow">Soma USA · Jetpack · versão de teste</div><h1>Previsão de estoque e produção</h1><p>Pedidos previstos (histórico × rampa manual), estoque projetado dia a dia por produto e quanto produzir. Exemplo montado com os dados que já alimentam a aba Ruptura e vendas (Shopify + Melonn da SOMA CO); quando a loja da Soma USA estiver conectada, a mesma tela passa a usar os dados dela.</p></div>
-    <span class="pill warn">Página de teste · não altera a aba Ruptura e vendas</span>
-  </div>
-  <div class="alerts" id="pv-alerts" data-tab="prev"></div>
-
-  <section class="card" data-tab="prev">
+  <section class="card" data-tab="rup2">
     <div class="sec-h">
-      <h2>Previsão manual de pedidos</h2>
+      <h2>Previsão manual de pedidos <span class="pv-new">novo</span></h2>
       <p id="pv-src">Lendo parâmetros da planilha…</p>
     </div>
     <div class="pv-ctl">
@@ -560,9 +548,9 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <div class="note">Arraste um ponto da linha <b>Manual</b> para mudar a previsão daquele dia (com a opção acima, os dias seguintes acompanham). As edições e os controles ficam salvos neste navegador; “Desfazer edições” volta para os parâmetros da planilha.</div>
   </section>
 
-  <section class="card" data-tab="prev">
+  <section class="card" data-tab="rup2">
     <div class="sec-h">
-      <h2>Estoque e produção por produto</h2>
+      <h2>Estoque e produção por produto <span class="pv-new">novo</span></h2>
       <span class="seg" id="pv-scen"><button data-v="man">Cenário manual (rampa)</button><button data-v="hist">Cenário histórico (média 14 dias)</button></span>
     </div>
     <div class="tbl"><table id="pv-tab"></table></div>
@@ -571,9 +559,9 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <div class="note">Linha cheia = estoque físico projetado · tracejada = posição (físico + programado que ainda não chegou) · faixas: <b style="color:var(--crit)">vermelha</b> até a demanda do tempo de transporte, <b style="color:var(--warn)">amarela</b> até transporte + segurança, <b style="color:var(--good)">verde</b> acima · linha vertical = ruptura.</div>
   </section>
 
-  <section class="card" data-tab="prev">
+  <section class="card" data-tab="rup2">
     <div class="sec-h">
-      <h2>Produção em andamento</h2>
+      <h2>Produção em andamento <span class="pv-new">novo</span></h2>
       <p id="pv-lots-src"></p>
     </div>
     <div class="tbl"><table id="pv-lots"></table></div>
@@ -585,6 +573,21 @@ tr.oc-det:hover>td{background:var(--surface-2)}
       <span class="note" id="pv-copy-st"></span>
     </div>
     <div class="note">Entrada em estoque = envio estimado + tempo de transporte. Lotes “Recebido” saem da projeção. Para a equipe ver: <b>Copiar para a planilha</b> e colar na aba <b>Produção em andamento</b> a partir da célula A1 — o painel lê essa aba para todos. Quando há lotes aqui, eles substituem a lista de produções da aba Controle de produção.</div>
+  </section>
+
+
+  <section class="card" id="mel-sec" data-tab="melonn" hidden>
+    <div class="sec-h">
+      <h2>Estoque Melonn por bodega — reporte de inventário</h2>
+      <p id="mel-st">Baixe na Melonn: Reporte inventario → filtre <b>uma bodega</b> → Descargar reporte. Solte o arquivo aqui.</p>
+    </div>
+    <div class="fhead">
+      <label class="chk">Bodega do relatório <select id="mel-bod"><option>Bogotá</option><option>Medellín</option><option>Cali</option><option>Barranquilla</option></select></label>
+      <input type="file" id="mel-file" accept=".xlsx,.xls,.csv" disabled>
+      <span class="note">Lê no seu navegador os SKUs SOMAPINA, SOMANARANJA e SHAKER: disponível, reservada, alistada e esperada.</span>
+    </div>
+    <div class="tbl"><table id="mel-tab"></table></div>
+    <div class="note" id="mel-note">Quando existe leitura da Melonn para uma bodega, a <b>esperada</b> dela vira o trânsito daquele CEDI na projeção (substitui os lotes para fins de trânsito; os lotes continuam como registro da fábrica).</div>
   </section>
 
   <div class="page-h" data-tab="lotes">
@@ -732,7 +735,7 @@ tr.oc-det:hover>td{background:var(--surface-2)}
   </section>
 
 
-  <section class="card" data-tab="ruptura" id="bolsas-sec">
+  <section class="card" data-tab="ruptura,rup2" id="bolsas-sec">
     <div class="sec-h">
       <h2>Bolsas de envio — ruptura</h2>
       <p>1 Soma Sculpt = bolsa pequena · 2 ou mais = bolsa grande (os mesmos pedidos que levam shaker). Estoque = corte de segunda da Melonn (material de empaque), projetado até hoje.</p>
@@ -744,12 +747,12 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     </details>
   </section>
 
-  <section class="card" data-tab="ruptura">
+  <section class="card" data-tab="ruptura,rup2">
     <div class="sec-h"><h2>Estoque por bodega (Shopify)</h2><p>Disponível = em mãos − comprometido com pedidos pagos. Dias = disponível da bodega ÷ ritmo médio do período.</p></div>
     <div class="tbl"><table id="bod"></table></div>
   </section>
 
-  <section class="card" data-tab="ruptura">
+  <section class="card" data-tab="ruptura,rup2">
     <div class="sec-h">
       <h2>Curva de estoque até a ruptura</h2>
       <div class="seg" id="seg"></div>
@@ -758,7 +761,7 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <div class="legend">Linha cheia = cenário Média · tracejada = Pico · pontilhada = Mínimo. O estoque considera disponível + em trânsito.</div>
   </section>
 
-  <section class="card" data-tab="ruptura">
+  <section class="card" data-tab="ruptura,rup2">
     <div class="sec-h"><h2>Vendas no período</h2><p id="per-lbl"></p></div>
     <div class="charts">
       <div class="span2"><div class="eyebrow">Unidades por dia por SKU</div><div class="chart"><canvas id="cUnits"></canvas></div></div>
@@ -842,7 +845,7 @@ tr.oc-det:hover>td{background:var(--surface-2)}
     <div class="note">Fluxo mensal: o time coloca as faturas (imagem/PDF), os Excel de cargos e o sell_orders na pasta do Drive do mês, informa o saldo da plataforma e as cotações na aba Cotacoes da planilha, e pede no chat <code>fecha as faturas de &lt;mês&gt;</code>. O relatório é calculado e publicado aqui, com o Excel completo para baixar.</div>
   </section>
 
-  <section class="card" data-tab="ruptura">
+  <section class="card" data-tab="ruptura,rup2">
     <details><summary>Guia rápido do painel</summary>
     <div class="howto" style="margin-top:8px">
       <div>1. Escolha o período (atalhos ou datas). Tudo recalcula: KPIs, cenários, gráficos.</div>
@@ -1349,7 +1352,7 @@ function render(){
   $("#daily").innerHTML=`<tr><th>Dia</th><th>Pedidos</th><th>Itens</th><th>Piña</th><th>Naranja</th><th>Shaker</th></tr>`+rows.map(r=>`<tr><td>${dmw(r.d)}${r.d===META.parcial?" <span class='note'>(parcial)</span>":""}</td><td class="num">${fmt(r.o)}</td><td class="num">${fmt(r.i)}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.n)}</td><td class="num">${fmt(r.s)}</td></tr>`).join("")+`<tr><td><b>Total</b></td><td class="num"><b>${fmt(ord)}</b></td><td class="num"><b>${fmt(it)}</b></td><td class="num"><b>${fmt(tp)}</b></td><td class="num"><b>${fmt(tn)}</b></td><td class="num"><b>${fmt(ts)}</b></td></tr>`;
 }
 render();
-showTab(["ruptura","prev","lotes","oc","tk","cedi","dist","faturas"].includes(h0)?h0:"prev");
+showTab(["ruptura","rup2","lotes","oc","tk","cedi","dist","faturas"].includes(h0)?h0:"oc");
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",render);
 new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 
@@ -1941,6 +1944,6 @@ function pvTSV(){const L=pvLots().lots;return ["Produto\tLote\tQuantidade\tIníc
   pvLoad();
 })();
 
-{const _st=showTab;showTab=function(t){_st(t);if(t==="prev")Object.values(CH).forEach(c=>{try{c.resize()}catch(_){}})}}
+{const _st=showTab;showTab=function(t){_st(t);if(t==="rup2")Object.values(CH).forEach(c=>{try{c.resize()}catch(_){}})}}
 </script>
 </body></html>
