@@ -1,0 +1,3 @@
+motor/_build/
+motor/__pycache__/
+motor/entrada.json

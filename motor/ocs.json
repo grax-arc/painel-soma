@@ -1,0 +1,94 @@
+[
+ {
+  "numero": "223492",
+  "lote": 9,
+  "exemplo": true,
+  "emissao": "2026-07-27",
+  "fornecedor": "BELAB (NIT 901611009)",
+  "moeda": "COP",
+  "itens": [
+   {
+    "sku": "SOM-PRD-001",
+    "ref": "n",
+    "qtd": 25000,
+    "unit": 21449
+   },
+   {
+    "sku": "SOM-PRD-002",
+    "ref": "p",
+    "qtd": 25000,
+    "unit": 21449
+   }
+  ],
+  "iva": 0.19,
+  "entrega_acordada": "2026-09-25",
+  "modalidade": "Recogida en proveedor (EXW)",
+  "condicao": "50% antecipo + 50% em 30 dias",
+  "antecipo_pct": 0.5,
+  "prazo_saldo_dias": 30,
+  "comprador": "Leonan",
+  "pagamentos": [
+   {
+    "tipo": "Antecipo 50%",
+    "valor": 638107750,
+    "data": "2026-07-28",
+    "comprovante": null
+   }
+  ],
+  "doc_oc": null,
+  "pasta": null,
+  "demo_despachos": [
+   {
+    "fecha": "2026-09-08",
+    "ref": "n",
+    "qtd": 8000,
+    "promessa": "2026-09-10"
+   },
+   {
+    "fecha": "2026-09-10",
+    "ref": "p",
+    "qtd": 6000,
+    "promessa": "2026-09-12"
+   },
+   {
+    "fecha": "2026-09-15",
+    "ref": "n",
+    "qtd": 9000,
+    "promessa": "2026-09-17"
+   },
+   {
+    "fecha": "2026-09-17",
+    "ref": "p",
+    "qtd": 6000,
+    "promessa": "2026-09-19"
+   },
+   {
+    "fecha": "2026-09-22",
+    "ref": "n",
+    "qtd": 8000,
+    "promessa": "2026-09-24"
+   },
+   {
+    "fecha": "2026-09-24",
+    "ref": "p",
+    "qtd": 6000,
+    "promessa": "2026-09-26"
+   },
+   {
+    "fecha": "2026-09-29",
+    "ref": "p",
+    "qtd": 3000,
+    "promessa": "2026-10-01",
+    "est": "tr"
+   }
+  ],
+  "demo_conclusao": [
+   {
+    "fecha": "2026-10-01",
+    "ref": "p",
+    "qtd": 4000,
+    "promessa": "2026-10-03"
+   }
+  ]
+ }
+]

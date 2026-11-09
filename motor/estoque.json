@@ -1,0 +1,68 @@
+{
+ "p": {
+  "nome": "Soma Piña",
+  "sku": "SOMAPINA",
+  "bod": {
+   "Bogotá": [
+    0,
+    874
+   ],
+   "Medellín": [
+    2135,
+    1897
+   ],
+   "Cali": [
+    0,
+    132
+   ],
+   "Barranquilla": [
+    336,
+    138
+   ]
+  }
+ },
+ "n": {
+  "nome": "Soma Naranja",
+  "sku": "SOMANARANJA",
+  "bod": {
+   "Bogotá": [
+    369,
+    756
+   ],
+   "Medellín": [
+    950,
+    1292
+   ],
+   "Cali": [
+    220,
+    105
+   ],
+   "Barranquilla": [
+    888,
+    105
+   ]
+  }
+ },
+ "s": {
+  "nome": "Shaker Termo",
+  "sku": "Shaker",
+  "bod": {
+   "Bogotá": [
+    13616,
+    463
+   ],
+   "Medellín": [
+    11820,
+    913
+   ],
+   "Cali": [
+    2520,
+    68
+   ],
+   "Barranquilla": [
+    2942,
+    80
+   ]
+  }
+ }
+}
