@@ -1,0 +1,54 @@
+name: Atualizar painel (Shopify, a cada 15 min)
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  actions: read
+
+concurrency:
+  group: atualizar-painel
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ler a Shopify e gerar o painel
+        env:
+          SHOPIFY_SHOP: dw1rtx-dm
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: python3 motor/auto_shopify.py
+
+      - name: Publicar se os dados mudaram
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- motor/rows.json motor/estoque.json motor/links.json motor/dist.json; then
+            echo "Dados iguais aos publicados: nada a publicar."
+            exit 0
+          fi
+          git config user.name "Painel SOMA (automático)"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A index.html teste.html motor
+          git commit -q -m "Painel: vendas e estoque Shopify de $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (automático, 15 min)"
+          git pull -q --rebase
+          git push -q
+          SHA=$(git rev-parse HEAD)
+          # garante a publicação no GitHub Pages (pede o build se o push não disparou sozinho)
+          sleep 45
+          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA" --jq '[.workflow_runs[] | select(.name=="pages-build-deployment")] | length' || echo 0)
+          if [ "$n" = "0" ]; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" >/dev/null && echo "Build do Pages solicitado." || echo "Não consegui pedir o build do Pages."
+          else
+            echo "Build do Pages já em andamento."
+          fi

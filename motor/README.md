@@ -2,6 +2,13 @@
 
 Gera `index.html` (oficial) e `teste.html` (teste) na raiz do repositório a partir de `template.html` e dos dados desta pasta. SKUs: p = Piña (SOMAPINA), n = Naranja (SOMANARANJA), s = Shaker, r = Frutos Rojos (SOMAROJO, 4 produtos na Shopify com o mesmo SKU; desde 10/11/2026).
 
+## Atualização automática a cada 15 min (GitHub Actions)
+
+`.github/workflows/atualizar-painel.yml` roda `motor/auto_shopify.py` a cada 15 minutos: lê a Shopify pela Admin API
+(mesmas consultas de `atualizar.py`), valida, gera o painel e publica só se os dados mudaram.
+Precisa dos segredos do repositório `SHOPIFY_CLIENT_ID` e `SHOPIFY_CLIENT_SECRET` (app do Dev Dashboard instalado
+na loja, com os escopos read_reports, read_products e read_inventory). Sem os segredos, ele não faz nada.
+
 ## Atualização de vendas e estoque (automática a cada 5 h, ou à mão)
 
 1. `python3 motor/atualizar.py --consultas` imprime as consultas Shopify já com as datas.

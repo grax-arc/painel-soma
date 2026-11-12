@@ -78,6 +78,21 @@ def precisa_dist():
     return fim != ontem.strftime("%d/%m")
 
 
+def lista_consultas():
+    """[(chave, tipo, consulta)] — tipo "shopifyql" ou "graphql". Usado pelo auto_shopify.py (GitHub Actions)."""
+    d0 = hoje_loja() - dt.timedelta(days=DIAS_ATRAS)
+    ontem = hoje_loja() - dt.timedelta(days=1)
+    q = [("pedidos", "shopifyql", f"FROM sales SHOW orders, net_items_sold WHERE order_payment_status = 'Paid' TIMESERIES day SINCE {d0} UNTIL today"),
+         ("skus", "shopifyql", f"FROM sales SHOW orders, net_items_sold WHERE order_payment_status = 'Paid' AND product_variant_sku IN ('SOMAPINA','SOMANARANJA','Shaker','SOMAROJO') GROUP BY product_variant_sku TIMESERIES day SINCE {d0} UNTIL today"),
+         ("estoque", "graphql", '{ nodes(ids: ' + json.dumps(VARIANTES) + ') { ... on ProductVariant { sku inventoryItem { inventoryLevels(first: 10) { nodes { location { name } quantities(names: ["available","committed","on_hand"]) { name quantity } } } } } } }'),
+         ("link", "shopifyql", f"FROM sales SHOW orders, net_items_sold, gross_sales WHERE product_id = {LINK_PRODUCT_ID} AND order_payment_status = 'Paid' TIMESERIES day SINCE {d0} UNTIL today")]
+    if precisa_dist():
+        for k, n in (("d30", 30), ("d7", 7)):
+            ini = ontem - dt.timedelta(days=n - 1)
+            q.append(("dist_" + k, "shopifyql", f"FROM sales SHOW net_items_sold WHERE order_payment_status = 'Paid' AND product_variant_sku IN ('SOMAPINA','SOMANARANJA','Shaker','SOMAROJO') GROUP BY shipping_region, product_variant_sku SINCE {ini} UNTIL {ontem} LIMIT 300"))
+    return q
+
+
 def consultas():
     d0 = hoje_loja() - dt.timedelta(days=DIAS_ATRAS)
     ontem = hoje_loja() - dt.timedelta(days=1)
