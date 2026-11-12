@@ -1,0 +1,10 @@
+{
+ "lido_em": "2026-11-12T16:08",
+ "fonte": "sell_orders da Melonn: pedidos 'on stand by - not able to fulfil - no stock', criados de 11/11 08:32 a 12/11 12:59 (coluna Cantidad agotada)",
+ "regra": "[esgotados, disponível Shopify da bodega antes da leitura]. O painel desconta os esgotados do disponível da bodega. Se o disponível subir mais de 20 un. acima da base, a Melonn recebeu mercadoria e usou para esses pedidos: o desconto daquela bodega deixa de valer. Troque este arquivo quando chegar um sell_orders novo.",
+ "skus": {
+  "p": {"Bogotá": [673, 0], "Medellín": [179, 220], "Cali": [108, 0], "Barranquilla": [0, 62]},
+  "n": {"Bogotá": [0, 3053], "Medellín": [0, 1536], "Cali": [0, 27], "Barranquilla": [0, 674]},
+  "s": {"Bogotá": [0, 12800], "Medellín": [0, 10263], "Cali": [0, 2385], "Barranquilla": [0, 2777]}
+ }
+}

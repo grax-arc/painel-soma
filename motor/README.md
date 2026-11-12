@@ -17,5 +17,6 @@ Gera `index.html` (oficial) e `teste.html` (teste) na raiz do repositório a par
 
 - `melonn.json`: leitura do Reporte inventario da Melonn (disponible, esperada, reservada, alistada). Só muda quando chegam prints novos.
 - `fechs.json`: fechamentos das faturas Melonn.
+- `esgotados.json`: pedidos esgotados na Melonn (arquivo sell_orders, coluna Cantidad agotada) por SKU e bodega, com o disponível da bodega antes da leitura. O `gen.py` desconta esses esgotados do disponível de cada bodega, e o desconto de uma bodega para sozinho quando o disponível dela sobe mais de 20 un. acima da base, porque a Melonn recebeu mercadoria e atendeu a fila. Troque o arquivo quando chegar um sell_orders novo.
 - `lotes_embed.json`, `ocs.json`, `tk_data.json`: lotes, ordens de compra e tickets (a planilha "Painel SOMA — dados" é lida ao vivo pelo painel).
 - Layout: `template.html`; abas de teste: `oc_addon.py`, `tk_parts.py`, `prev_parts.py`.

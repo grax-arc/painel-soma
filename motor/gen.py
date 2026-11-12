@@ -17,6 +17,22 @@ def raw(name):
 rows = load("rows.json")
 stock = load("estoque.json")
 meta = load("meta.json")
+
+# Pedidos esgotados na Melonn (pagos, sem estoque na bodega): descontados do disponível de cada bodega,
+# para a cobertura e o ponto de ruptura já considerarem essa fila. O desconto de uma bodega deixa de valer
+# quando o disponível dela sobe mais de 20 un. acima da base (a Melonn recebeu mercadoria e atendeu a fila).
+esg_aplicado = {}
+if os.path.exists(os.path.join(BASE, "esgotados.json")):
+    esg = load("esgotados.json")
+    for k, bods in esg.get("skus", {}).items():
+        for b, (q, base) in bods.items():
+            if q <= 0 or k not in stock or b not in stock[k]["bod"]:
+                continue
+            agora = stock[k]["bod"][b][0]
+            if agora - base > 20:
+                continue
+            stock[k]["bod"][b] = [agora - q, stock[k]["bod"][b][1]]
+            esg_aplicado["%s %s" % (k, b)] = q
 melj = load("melonn.json")
 mel = {b: {"bodega": b, "lido_em": melj["lido_em"],
            "skus": {k: {"disp": v[0], "esp": v[1], "res": v[2], "al": v[3]} for k, v in d.items()}}
@@ -42,4 +58,4 @@ html = html.replace("/*__DATA__*/", "const ROWS=%s;const STOCK=%s;const META=%s;
     raw("lotes_embed.json"), raw("links.json")))
 with open(os.path.join(BUILD, "painel_ruptura_soma.html"), "w", encoding="utf-8") as f:
     f.write(html)
-print("gen ok", len(html))
+print("gen ok", len(html), "esgotados descontados:", esg_aplicado or "nenhum")

@@ -1015,7 +1015,7 @@ function render(){
     const dAvg=tot/(avg[k]||1e-9);
     const el=document.createElement("div");el.className="rcard";
     el.innerHTML=`<div class="top"><h2><span class="sw ${k}"></span>${st.nome}</h2><span class="pill ${cls(dAvg)}">${avg[k]>0?f1(dAvg)+" dias (média)":"sem venda"}</span></div>
-     <div class="stock"><span>Disponível Shopify</span><span class="num">${fmt(avail)}</span>
+     <div class="stock"><span>Disponível</span><span class="num">${fmt(avail)}</span>
       <span>Comprometido (já vendido)</span><span class="num">${fmt(comm)}</span>
       <span>Em trânsito (${transitSrc(k)})</span><span class="num">${fmt(lt)}</span>
       <span><label for="tr-${k}">Ajuste manual</label></span><span><input type="number" id="tr-${k}" min="0" step="100" value="${tr}"></span>
@@ -1026,7 +1026,7 @@ function render(){
   });
 
   // alertas
-  const al=[];SK.forEach(([k])=>{const st=STOCK[k];const avail=Object.values(st.bod).reduce((a,[x])=>a+x,0)+lotesTransit(k)+(+store.tr[k]||0);const d=avail/(avg[k]||1e-9);const bz=Object.entries(st.bod).filter(([b,[x]])=>x===0&&b!=="Cali").map(([b])=>b);
+  const al=[];SK.forEach(([k])=>{const st=STOCK[k];const avail=Object.values(st.bod).reduce((a,[x])=>a+x,0)+lotesTransit(k)+(+store.tr[k]||0);const d=avail/(avg[k]||1e-9);const bz=Object.entries(st.bod).filter(([b,[x]])=>x<=0&&b!=="Cali").map(([b])=>b);
     if(avg[k]>0&&d<=3)al.push(["crit",`${st.nome}: ruptura em <b>${f1(d)} dias</b> no ritmo médio do período (${fmt(avail)} un.)${bz.length?` · ${bz.join(" e ")} já sem disponível`:""}`]);
     else if(avg[k]>0&&d<=7)al.push(["warn",`${st.nome}: <b>${f1(d)} dias</b> de cobertura${bz.length?` · ${bz.join(" e ")} sem disponível`:""}`]);
     else if(bz.length)al.push(["warn",`${st.nome}: ${bz.join(" e ")} sem disponível (cobertura total ${f1(d)} d)`])});
@@ -1036,7 +1036,7 @@ function render(){
   const bods=["Bogotá","Medellín","Cali"];
   let h=`<tr><th>SKU</th>${bods.map(b=>`<th>${b}</th>`).join("")}<th>Total disp.</th><th>Dias (média)</th></tr>`;
   SK.forEach(([k])=>{const st=STOCK[k];const tot=bods.reduce((a,b)=>a+st.bod[b][0],0);const d=tot/(avg[k]||1e-9);
-    h+=`<tr><td><span class="sw ${k}"></span>${st.nome} <span class="note">${st.sku}</span></td>${bods.map(b=>{const[a,c]=st.bod[b];return `<td class="num">${a===0?`<span class="pill crit">0</span>`:fmt(a)}<span class="note"> (${fmt(c)} compr.)</span></td>`}).join("")}<td class="num"><b>${fmt(tot)}</b></td><td class="num ${cls(d)}">${avg[k]>0?f1(d):"—"}</td></tr>`});
+    h+=`<tr><td><span class="sw ${k}"></span>${st.nome} <span class="note">${st.sku}</span></td>${bods.map(b=>{const[a,c]=st.bod[b];return `<td class="num">${a<=0?`<span class="pill crit">${fmt(a)}</span>`:fmt(a)}<span class="note"> (${fmt(c)} compr.)</span></td>`}).join("")}<td class="num"><b>${fmt(tot)}</b></td><td class="num ${cls(d)}">${avg[k]>0?f1(d):"—"}</td></tr>`});
   $("#bod").innerHTML=h;
 
   // projection chart
