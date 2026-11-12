@@ -1,6 +1,6 @@
 # Motor do painel SOMA
 
-Gera `index.html` (oficial) e `teste.html` (teste) na raiz do repositório a partir de `template.html` e dos dados desta pasta.
+Gera `index.html` (oficial) e `teste.html` (teste) na raiz do repositório a partir de `template.html` e dos dados desta pasta. SKUs: p = Piña (SOMAPINA), n = Naranja (SOMANARANJA), s = Shaker, r = Frutos Rojos (SOMAROJO, 4 produtos na Shopify com o mesmo SKU; desde 10/11/2026).
 
 ## Atualização de vendas e estoque (automática a cada 5 h, ou à mão)
 

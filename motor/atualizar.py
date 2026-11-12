@@ -12,8 +12,8 @@ Passo a passo:
 Formato de motor/entrada.json:
 {
   "pedidos": [["2026-11-01", 1111, 2562], ...],          # consulta 1: dia, orders, net_items_sold
-  "skus":    [["2026-11-01", "SOMAPINA", 1308], ...],      # consulta 2: dia, product_variant_sku, net_items_sold
-  "estoque": [["SOMAPINA", "Melonn Bogota", 0, 874], ...], # consulta 3: sku, local, available, committed
+  "skus":    [["2026-11-01", "SOMAPINA", 1308], ...],      # consulta 2: dia, product_variant_sku, net_items_sold (inclui SOMAROJO)
+  "estoque": [["SOMAPINA", "Melonn Bogota", 0, 874], ...], # consulta 3: sku, local, available, committed (uma linha por produto e local; SOMAROJO vem de 4 produtos)
   "link":    [["2026-11-01", 2, 2, 199800], ...],          # consulta 4: dia, orders, net_items_sold, gross_sales
   "dist":    {"d30": [["Bogotá, D.C.", "SOMAPINA", 6435], ...],   # consultas 5 e 6 (só quando pedidas)
               "d7":  [["Bogotá, D.C.", "SOMAPINA", 1923], ...]}
@@ -27,12 +27,18 @@ REPO = os.path.dirname(BASE)
 TZ_LOJA = ZoneInfo("America/Bogota")      # fuso da loja (dias da ShopifyQL)
 TZ_USER = ZoneInfo("America/Sao_Paulo")   # horário mostrado em "atualizado"
 DIAS_ATRAS = 10
-SKUS = {"SOMAPINA": "p", "SOMANARANJA": "n", "SHAKER": "s"}
+SKUS = {"SOMAPINA": "p", "SOMANARANJA": "n", "SHAKER": "s", "SOMAROJO": "r"}
+KS = "pnsr"   # r = Frutos Rojos (SOMAROJO), desde 10/11/2026
 BODS = ["Bogotá", "Medellín", "Cali", "Barranquilla"]
 LINK_PRODUCT_ID = 8311531339833
 VARIANTES = ["gid://shopify/ProductVariant/45650513920057",   # SOMAPINA (Soma Sculpt Piña)
              "gid://shopify/ProductVariant/45650513952825",   # SOMANARANJA (Soma Sculpt Naranja)
-             "gid://shopify/ProductVariant/46302938300473"]   # Shaker (Shaker Termo Gratis)
+             "gid://shopify/ProductVariant/46302938300473",   # Shaker (Shaker Termo Gratis)
+             # SOMAROJO (Frutos Rojos): 4 produtos com o mesmo SKU; disponível igual, comprometido somado
+             "gid://shopify/ProductVariant/51133011329081",   # Soma Sculpt - Limitado · Rojos
+             "gid://shopify/ProductVariant/51156236206137",   # Soma Sculpt · Rojos
+             "gid://shopify/ProductVariant/51054710620217",   # SOMA ROJO
+             "gid://shopify/ProductVariant/51133477191737"]   # REGALO DE CREATORS BIENVENIDA - ROJO
 
 
 def p(path):
@@ -79,7 +85,7 @@ def consultas():
     q.append(("1 pedidos (run-analytics-query)",
               f"FROM sales SHOW orders, net_items_sold WHERE order_payment_status = 'Paid' TIMESERIES day SINCE {d0} UNTIL today"))
     q.append(("2 skus (run-analytics-query)",
-              f"FROM sales SHOW orders, net_items_sold WHERE order_payment_status = 'Paid' AND product_variant_sku IN ('SOMAPINA','SOMANARANJA','Shaker') GROUP BY product_variant_sku TIMESERIES day SINCE {d0} UNTIL today"))
+              f"FROM sales SHOW orders, net_items_sold WHERE order_payment_status = 'Paid' AND product_variant_sku IN ('SOMAPINA','SOMANARANJA','Shaker','SOMAROJO') GROUP BY product_variant_sku TIMESERIES day SINCE {d0} UNTIL today"))
     q.append(("3 estoque (graphql_query)",
               '{ nodes(ids: ' + json.dumps(VARIANTES) + ') { ... on ProductVariant { sku inventoryItem { inventoryLevels(first: 10) { nodes { location { name } quantities(names: ["available","committed","on_hand"]) { name quantity } } } } } } }'))
     q.append(("4 link de oferta (run-analytics-query)",
@@ -88,7 +94,7 @@ def consultas():
         for k, n in (("d30", 30), ("d7", 7)):
             ini = ontem - dt.timedelta(days=n - 1)
             q.append((f"{5 if k == 'd30' else 6} dist {k} (run-analytics-query)",
-                      f"FROM sales SHOW net_items_sold WHERE order_payment_status = 'Paid' AND product_variant_sku IN ('SOMAPINA','SOMANARANJA','Shaker') GROUP BY shipping_region, product_variant_sku SINCE {ini} UNTIL {ontem} LIMIT 300"))
+                      f"FROM sales SHOW net_items_sold WHERE order_payment_status = 'Paid' AND product_variant_sku IN ('SOMAPINA','SOMANARANJA','Shaker','SOMAROJO') GROUP BY shipping_region, product_variant_sku SINCE {ini} UNTIL {ontem} LIMIT 300"))
     else:
         q.append(("5/6 dist", "NÃO PRECISA hoje (distribuição já está até ontem) — não inclua \"dist\" na entrada"))
     for t, s in q:
@@ -122,7 +128,7 @@ def validar_e_mesclar(E):
         raise Erro(f"pedidos terminam em {dias[-1]}, antes do último dia do painel ({ult_ant})")
     hoje = dias[-1]
 
-    sk = {d: {"p": 0, "n": 0, "s": 0} for d in dias}
+    sk = {d: {k: 0 for k in KS} for d in dias}
     vistos = set()
     for x in E.get("skus", []):
         d = str(x[0])[:10]
@@ -131,7 +137,7 @@ def validar_e_mesclar(E):
             continue
         sk[d][k] += n_int(x[2])
         vistos.add(k)
-    if vistos != {"p", "n", "s"}:
+    if not {"p", "n", "s"} <= vistos:   # Frutos Rojos (r) pode faltar em dias sem venda
         raise Erro(f"skus: faltam linhas de {sorted({'p','n','s'} - vistos)} — confira a consulta 2")
 
     # base para checar faixas: últimos 14 dias completos já publicados
@@ -141,12 +147,12 @@ def validar_e_mesclar(E):
     for d in dias:
         o, i = ped[d]
         v = sk[d]
-        novo = {"d": d, "o": o, "i": i, "p": v["p"], "n": v["n"], "s": v["s"]}
+        novo = {"d": d, "o": o, "i": i, "p": v["p"], "n": v["n"], "s": v["s"], "r": v["r"]}
         parcial = d == hoje
         if i < o:
             raise Erro(f"{d}: itens ({i}) menor que pedidos ({o})")
-        if v["p"] + v["n"] + v["s"] > i + 5:
-            raise Erro(f"{d}: Piña+Naranja+Shaker ({v['p']+v['n']+v['s']}) maior que itens ({i})")
+        if sum(v.values()) > i + 5:
+            raise Erro(f"{d}: Piña+Naranja+Shaker+Rojo ({sum(v.values())}) maior que itens ({i})")
         if d in by and d < (dt.date.fromisoformat(hoje) - dt.timedelta(days=2)).isoformat():
             for k in ("o", "p", "n", "s"):
                 a, b = by[d][k], novo[k]
@@ -177,8 +183,11 @@ def validar_e_mesclar(E):
         av, cm = n_int(x[2]), n_int(x[3])
         if av < 0 or cm < 0:
             raise Erro(f"estoque negativo em {x}")
-        novos[(k, b)] = [av, cm]
-    falta = [(k, b) for k in "pns" for b in BODS if (k, b) not in novos]
+        if (k, b) in novos:   # mesmo SKU em vários produtos: disponível é o mesmo, comprometido soma
+            novos[(k, b)] = [max(av, novos[(k, b)][0]), novos[(k, b)][1] + cm]
+        else:
+            novos[(k, b)] = [av, cm]
+    falta = [(k, b) for k in KS for b in BODS if (k, b) not in novos]
     if falta:
         raise Erro(f"estoque: faltam {falta}")
     mud_est = []
@@ -214,7 +223,7 @@ def validar_e_mesclar(E):
                 reg, kk = str(x[0]), SKUS.get(str(x[1]).strip().upper())
                 if not kk or not reg:
                     continue
-                out.setdefault(reg, {"p": 0, "n": 0, "s": 0})[kk] += n_int(x[2])
+                out.setdefault(reg, {k: 0 for k in KS})[kk] += n_int(x[2])
             if len(out) < 15:
                 raise Erro(f"dist {k}: só {len(out)} departamentos — consulta incompleta")
             dist[k] = dict(sorted(out.items(), key=lambda kv: -(kv[1]["p"] + kv[1]["n"] + kv[1]["s"])))
@@ -264,10 +273,10 @@ def main():
         print("ERRO na geração do HTML — dados restaurados:", e)
         return 1
     r = rows2[-1]
-    tot = {k: (sum(v[0] for v in st[k]["bod"].values()), sum(v[1] for v in st[k]["bod"].values())) for k in "pns"}
+    tot = {k: (sum(v[0] for v in st[k]["bod"].values()), sum(v[1] for v in st[k]["bod"].values())) for k in KS}
     print("Resumo:")
     print(f"  hoje {r['d']} (parcial): {r['o']} pedidos pagos · Piña {r['p']} · Naranja {r['n']} · Shaker {r['s']}")
-    for k in "pns":
+    for k in KS:
         print(f"  {st[k]['nome']}: disponível {tot[k][0]} · comprometido {tot[k][1]}")
     if avisos:
         print("  dias revisados:", len(avisos))

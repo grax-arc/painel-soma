@@ -15,6 +15,8 @@ def raw(name):
         return f.read()
 
 rows = load("rows.json")
+for _r in rows:
+    _r.setdefault("r", 0)
 stock = load("estoque.json")
 meta = load("meta.json")
 
@@ -33,6 +35,12 @@ if os.path.exists(os.path.join(BASE, "esgotados.json")):
                 continue
             stock[k]["bod"][b] = [agora - q, stock[k]["bod"][b][1]]
             esg_aplicado["%s %s" % (k, b)] = q
+    # esgotados que não saem com a chegada de mercadoria (ex.: SKU SOMAROJOS sem ligação ao estoque SOMAROJO)
+    for k, bods in esg.get("fixos", {}).items():
+        for b, q in bods.items():
+            if q > 0 and k in stock and b in stock[k]["bod"]:
+                stock[k]["bod"][b] = [stock[k]["bod"][b][0] - q, stock[k]["bod"][b][1]]
+                esg_aplicado["%s %s fixo" % (k, b)] = q
 melj = load("melonn.json")
 mel = {b: {"bodega": b, "lido_em": melj["lido_em"],
            "skus": {k: {"disp": v[0], "esp": v[1], "res": v[2], "al": v[3]} for k, v in d.items()}}

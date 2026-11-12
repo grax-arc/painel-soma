@@ -1,6 +1,6 @@
 {
  "lido_em": "2026-11-12T16:14:00",
- "nota": "[disponible, esperada, reservada, alistada] por SKU (p=Piña, n=Naranja, s=Shaker) — prints do Reporte inventario da Melonn; só muda quando chegam prints novos",
+ "nota": "[disponible, esperada, reservada, alistada] por SKU (p=Piña, n=Naranja, s=Shaker, r=Frutos Rojos) — prints do Reporte inventario da Melonn; só muda quando chegam prints novos",
  "bodegas": {
   "Bogotá": {
    "p": [
@@ -20,6 +20,12 @@
     0,
     796,
     96
+   ],
+   "r": [
+    2374,
+    0,
+    378,
+    50
    ]
   },
   "Medellín": {
@@ -40,6 +46,12 @@
     0,
     359,
     845
+   ],
+   "r": [
+    1110,
+    0,
+    136,
+    340
    ]
   },
   "Cali": {
@@ -60,6 +72,12 @@
     0,
     106,
     40
+   ],
+   "r": [
+    0,
+    300,
+    0,
+    0
    ]
   },
   "Barranquilla": {
@@ -80,6 +98,12 @@
     0,
     91,
     78
+   ],
+   "r": [
+    0,
+    300,
+    0,
+    0
    ]
   }
  }

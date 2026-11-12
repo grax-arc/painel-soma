@@ -17,7 +17,7 @@
   /* ação */
   --accent:#1d4ed8; --accent-hover:#1e40af; --accent-soft:#e8eefc; --accent-fg:#ffffff; --ring:#93b4ff;
   /* séries */
-  --pina:#0f8a6a; --naranja:#e0701a; --shaker:#5b5fd6;
+  --pina:#0f8a6a; --naranja:#e0701a; --shaker:#5b5fd6; --rojo:#be185d;
   /* estados */
   --good:#15803d; --goodbg:#e7f6ec; --warn:#b45309; --warnbg:#fdf3e1; --crit:#b91c1c; --critbg:#fdeaea;
   --info:#1d4ed8; --infobg:#e8eefc;
@@ -38,7 +38,7 @@
   --line:#2a3040; --line-strong:#3a4256;
   --fg:#e7eaf0; --fg-2:#c9ced8; --muted:#9aa3b2; --faint:#6b7280;
   --accent:#7aa2ff; --accent-hover:#9ab8ff; --accent-soft:#1d2a4a; --accent-fg:#0b1020; --ring:#4f7dff;
-  --pina:#2fb08b; --naranja:#f08a3a; --shaker:#8e92ef;
+  --pina:#2fb08b; --naranja:#f08a3a; --shaker:#8e92ef; --rojo:#f472b6;
   --good:#4ade80; --goodbg:#143021; --warn:#fbbf24; --warnbg:#3a2c12; --crit:#f87171; --critbg:#3b1d1d;
   --info:#7aa2ff; --infobg:#1d2a4a;
   --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px -8px rgba(0,0,0,.6);
@@ -48,7 +48,7 @@
   --line:#2a3040; --line-strong:#3a4256;
   --fg:#e7eaf0; --fg-2:#c9ced8; --muted:#9aa3b2; --faint:#6b7280;
   --accent:#7aa2ff; --accent-hover:#9ab8ff; --accent-soft:#1d2a4a; --accent-fg:#0b1020; --ring:#4f7dff;
-  --pina:#2fb08b; --naranja:#f08a3a; --shaker:#8e92ef;
+  --pina:#2fb08b; --naranja:#f08a3a; --shaker:#8e92ef; --rojo:#f472b6;
   --good:#4ade80; --goodbg:#143021; --warn:#fbbf24; --warnbg:#3a2c12; --crit:#f87171; --critbg:#3b1d1d;
   --info:#7aa2ff; --infobg:#1d2a4a;
   --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px -8px rgba(0,0,0,.6);
@@ -125,7 +125,7 @@ code{font-family:var(--mono);font-size:.92em;background:var(--soft);padding:1px 
 .pill.warn{background:var(--warnbg);color:var(--warn);border-color:transparent}
 .pill.good{background:var(--goodbg);color:var(--good);border-color:transparent}
 .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
-.sw.p{background:var(--pina)}.sw.n{background:var(--naranja)}.sw.s{background:var(--shaker)}
+.sw.p{background:var(--pina)}.sw.n{background:var(--naranja)}.sw.s{background:var(--shaker)}.sw.r{background:var(--rojo)}
 .est{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;font-size:var(--fs-sm);font-weight:500;line-height:1.5;white-space:nowrap;background:var(--soft);color:var(--fg-2);border:1px solid var(--line)}
 .est::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
 .est.ok{background:var(--goodbg);color:var(--good);border-color:transparent}
@@ -570,7 +570,9 @@ td.lote-cell{border-left:4px solid var(--lc,var(--line));font-family:var(--mono)
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 /*__DATA__*/
-const SK=[["p","Piña","pina"],["n","Naranja","naranja"],["s","Shaker","shaker"]];
+const SK=[["p","Piña","pina"],["n","Naranja","naranja"],["s","Shaker","shaker"],["r","Frutos Rojos","rojo"]];
+// Frutos Rojos (SOMAROJO) lançado em 10–11/11/2026: médias e cenários dele contam só a partir do lançamento
+const R0=(ROWS.find(x=>(x.r||0)>=50)||{}).d||"9999-12-31";
 const $=s=>document.querySelector(s);
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const fmt=n=>Math.round(n).toLocaleString("pt-BR");
@@ -763,9 +765,9 @@ $("#f-sel").addEventListener("change",e=>{curF=e.target.value;renderFat()});
 let BOL={},BHIST=[];
 const bolDays=b=>{const t=BOL[b]?.lido_em;if(!t)return 0;return Math.max(0,(HOJE-new Date(new Date(t).toDateString()))/864e5)};
 function bolsasDemand(k,scope){ // k: "peq"|"gr"; scope: bodega or null (total). devolve un/dia
-  if(!PER)return 0;const{avg,ord}=PER;const upo=(avg.p+avg.n)/(avg.o||1);
+  if(!PER)return 0;const{avg,ord}=PER;const upo=(avg.p+avg.n+(avg.r||0))/(avg.o||1);
   if(!scope){return k==="gr"?avg.s:Math.max(0,avg.o-avg.s)}
-  const Ds=demandByBod("s")[scope]||0;const Dp=(demandByBod("p")[scope]||0)+(demandByBod("n")[scope]||0);const ordB=upo>0?Dp/upo:0;
+  const Ds=demandByBod("s")[scope]||0;const Dp=(demandByBod("p")[scope]||0)+(demandByBod("n")[scope]||0)+(demandByBod("r")[scope]||0);const ordB=upo>0?Dp/upo:0;
   return k==="gr"?Ds:Math.max(0,ordB-Ds)}
 function renderBolsas(){
   if(!PER)return;const{avg,W}=PER;const bods=Object.keys(BOL);if(typeof renderCedi==="function")renderCedi();const box=$("#bolsas");
@@ -823,7 +825,7 @@ loadSheets();setInterval(loadSheets,5*60*1000);
 
 /* ---------- ruptura por CEDI ---------- */
 function cediShare(){ // fatia de pedidos por CEDI (mix regional 30d, roteamento geográfico)
-  const w={};let tot=0;for(const[reg,v]of Object.entries(DIST.d30)){const u=(v.p||0)+(v.n||0)+(v.s||0);tot+=u;const sh=shareRegion(reg);for(const b of BODS)w[b]=(w[b]||0)+u*sh[b]}
+  const w={};let tot=0;for(const[reg,v]of Object.entries(DIST.d30)){const u=(v.p||0)+(v.n||0)+(v.s||0)+(v.r||0);tot+=u;const sh=shareRegion(reg);for(const b of BODS)w[b]=(w[b]||0)+u*sh[b]}
   const out={};BODS.forEach(b=>out[b]=tot?(w[b]||0)/tot:0);return out}
 function renderCedi(){
   if(!PER)return;const{avg,W}=PER;const act=activeBods();const sh=cediShare();
@@ -849,8 +851,8 @@ function renderCedi(){
   mk("cCedi",{type:"doughnut",data:{labels:act,datasets:[{data:act.map(b=>Math.round(PER.ord*(sh[b]||0))),backgroundColor:act.map(b=>C[b]),borderColor:css("--surface"),borderWidth:2}]},options:dOpts({cutout:"60%",plugins:{tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)} pedidos (${Math.round(sh[c.label]*100)}%)`}}}})});
   const gr=Math.round(PER.ord*avg.s/(avg.o||1)),pq=PER.ord-gr;
   mk("cBolsa",{type:"doughnut",data:{labels:["1 unidade · bolsa pequena","2+ unidades · bolsa grande"],datasets:[{data:[pq,gr],backgroundColor:[css("--muted"),css("--accent")],borderColor:css("--surface"),borderWidth:2}]},options:dOpts({cutout:"60%",plugins:{tooltip:{callbacks:{label:c=>` ${fmt(c.parsed)} pedidos (${Math.round(c.parsed/PER.ord*100)}%)`}}}})});
-  mk("cMix",{type:"bar",data:{labels:act,datasets:[{label:"Piña",data:act.map(b=>Math.round(avg.p*sh[b]*PER.n)),backgroundColor:css("--pina"),borderRadius:3},{label:"Naranja",data:act.map(b=>Math.round(avg.n*sh[b]*PER.n)),backgroundColor:css("--naranja"),borderRadius:3}]},options:baseOpts({scales:{x:{stacked:true,ticks:{color:fg},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:fg,callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}}}})});
-  const regs=Object.entries(DIST.d30).map(([r,v])=>({r,u:(v.p||0)+(v.n||0)+(v.s||0)})).sort((a,b)=>b.u-a.u);const totU=regs.reduce((a,x)=>a+x.u,0);const top=regs.slice(0,12);const rest=regs.slice(12).reduce((a,x)=>a+x.u,0);
+  mk("cMix",{type:"bar",data:{labels:act,datasets:[{label:"Piña",data:act.map(b=>Math.round(avg.p*sh[b]*PER.n)),backgroundColor:css("--pina"),borderRadius:3},{label:"Naranja",data:act.map(b=>Math.round(avg.n*sh[b]*PER.n)),backgroundColor:css("--naranja"),borderRadius:3},{label:"Frutos Rojos",data:act.map(b=>Math.round((avg.r||0)*sh[b]*PER.n)),backgroundColor:css("--rojo"),borderRadius:3}]},options:baseOpts({scales:{x:{stacked:true,ticks:{color:fg},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:fg,callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}}}})});
+  const regs=Object.entries(DIST.d30).map(([r,v])=>({r,u:(v.p||0)+(v.n||0)+(v.s||0)+(v.r||0)})).sort((a,b)=>b.u-a.u);const totU=regs.reduce((a,x)=>a+x.u,0);const top=regs.slice(0,12);const rest=regs.slice(12).reduce((a,x)=>a+x.u,0);
   const labs=[...top.map(x=>x.r.replace(", D.C.","").replace("Norte de Santander","N. Santander").replace("San Andrés, Providencia y Santa Catalina","San Andrés")),"Outros"];const vals=[...top.map(x=>x.u),rest].map(u=>Math.round(PER.ord*u/totU));
   const bodOf=r=>{const g=DIST.geo[r]||"Bogotá";return act.includes(g)?g:fallbackBod(g)};const cols=[...top.map(x=>C[bodOf(x.r)]),css("--muted")];
   mk("cDep",{type:"bar",data:{labels:labs,datasets:[{data:vals,backgroundColor:cols,borderRadius:3,maxBarThickness:18}]},options:baseOpts({indexAxis:"y",plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.parsed.x)} pedidos`}}},scales:{x:{beginAtZero:true,ticks:{color:fg,callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}},y:{ticks:{color:css("--fg"),font:{size:10.5},autoSkip:false},grid:{display:false}}}})});
@@ -865,7 +867,9 @@ const fallbackBod=g=>g==="Cali"?"Bogotá":g==="Barranquilla"?"Medellín":g;
 function shareRegion(reg){ // {Bogotá:x,Medellín:y,Cali:z} somando 1
   if(dRota==="geo"){const g=DIST.geo[reg]||"Bogotá";const b=activeBods().includes(g)?g:fallbackBod(g);const o={};BODS.forEach(x=>o[x]=x===b?1:0);return o}
   const r=DIST.rota[reg]||{};const t=(r.Bogotá||0)+(r.Medellín||0)||1;const o={};BODS.forEach(x=>o[x]=0);o.Bogotá=(r.Bogotá||0)/t;o.Medellín=(r.Medellín||0)/t;return o}
-function demandByBod(k){const days=dBase==="d7"?7:30;const out={};BODS.forEach(b=>out[b]=0);for(const[reg,v]of Object.entries(DIST[dBase])){const sh=shareRegion(reg);for(const b of BODS)out[b]+=(v[k]||0)*sh[b]/days}return out}
+function demandByBod(k){const days=dBase==="d7"?7:30;const out={};BODS.forEach(b=>out[b]=0);for(const[reg,v]of Object.entries(DIST[dBase])){const sh=shareRegion(reg);for(const b of BODS)out[b]+=(v[k]||0)*sh[b]/days}
+  if(k==="r"){const t=BODS.reduce((a,b)=>a+out[b],0);const base=t>0?out:demandByBod("p");const tb=BODS.reduce((a,b)=>a+base[b],0)||1;const rate=PER?.avg?.r||0;BODS.forEach(b=>out[b]=base[b]/tb*rate)}
+  return out}
 function waterfill(S,D,Q){ // devolve alocação x_b que iguala cobertura
   const bs=BODS.filter(b=>D[b]>0);if(!bs.length)return{};let lo=0,hi=1e5;for(let i=0;i<60;i++){const T=(lo+hi)/2;const need=bs.reduce((a,b)=>a+Math.max(0,T*D[b]-S[b]),0);if(need>Q)hi=T;else lo=T}
   const x={};bs.forEach(b=>x[b]=Math.max(0,Math.round(lo*D[b]-S[b])));const diff=Q-Object.values(x).reduce((a,v)=>a+v,0);if(diff){const b=bs.sort((a,c)=>(S[c]+x[c])/D[c]-(S[a]+x[a])/D[a]).at(-1);x[b]=Math.max(0,x[b]+diff)}return x}
@@ -896,7 +900,7 @@ function renderDist(){
     cards.appendChild(el);
   });
   // região
-  const days=dBase==="d7"?7:30;const regs=Object.entries(DIST[dBase]).map(([r,v])=>({r,tot:(v.p+v.n+v.s)/days,sc:(v.p+v.n)/days,sh:shareRegion(r)})).sort((a,b)=>b.tot-a.tot);
+  const days=dBase==="d7"?7:30;const regs=Object.entries(DIST[dBase]).map(([r,v])=>({r,tot:((v.p||0)+(v.n||0)+(v.s||0)+(v.r||0))/days,sc:((v.p||0)+(v.n||0)+(v.r||0))/days,sh:shareRegion(r)})).sort((a,b)=>b.tot-a.tot);
   const max=regs[0]?.tot||1;
   $("#dreg").innerHTML=`<tr><th>Departamento</th><th>Soma Sculpt/dia</th><th>Total un./dia</th><th>Atendido por</th><th style="min-width:160px">Bogotá · Medellín · Cali · Barranquilla</th></tr>`+regs.map(o=>`<tr><td>${o.r}</td><td class="num">${f1(o.sc)}</td><td class="num">${f1(o.tot)}</td><td style="text-align:left">${BODS.filter(b=>o.sh[b]>0).map(b=>`${b} ${Math.round(o.sh[b]*100)}%`).join(" · ")}</td><td><div class="b" style="height:10px;border-radius:3px;background:var(--soft);display:flex;overflow:hidden;width:${Math.round(o.tot/max*100)}%"><i style="width:${o.sh.Bogotá*100}%;background:var(--accent)"></i><i style="width:${o.sh.Medellín*100}%;background:var(--naranja)"></i><i style="width:${o.sh.Cali*100}%;background:var(--pina)"></i><i style="width:${(o.sh.Barranquilla||0)*100}%;background:var(--shaker)"></i></div></td></tr>`).join("");
   $("#dnote").innerHTML=`Vendas por departamento: Shopify, pedidos pagos, ${DIST.vendas_periodo[dBase]}. Cada departamento é atendido pelo CEDI mais próximo (regra fixa), como se nunca faltasse estoque. Trânsito por bodega: leitura Melonn ou lotes com bodega preenchida. Cobertura = (disponível + trânsito) ÷ demanda/dia da bodega.`;
@@ -978,17 +982,18 @@ function render(){
   let rows=ROWS.filter(r=>r.d>=d1.value&&r.d<=d2.value&&(inc.checked||r.d!==META.parcial));
   if(!rows.length){rows=ROWS.filter(r=>r.d===d2.value)}
   const n=rows.length, sum=k=>rows.reduce((a,r)=>a+r[k],0);
-  const ord=sum("o"),it=sum("i"),tp=sum("p"),tn=sum("n"),ts=sum("s");
-  const avg={p:tp/n,n:tn/n,s:ts/n,o:ord/n};
+  const ord=sum("o"),it=sum("i"),tp=sum("p"),tn=sum("n"),ts=sum("s"),tr=sum("r");
+  const rL=rows.filter(x=>x.d>=R0);
+  const avg={p:tp/n,n:tn/n,s:ts/n,r:rL.length?rL.reduce((a,x)=>a+x.r,0)/rL.length:0,o:ord/n};
   // Cenários independentes do período: Pico = média dos 3 dias mais fortes de todo o histórico; Mínimo = média dos 3 dias mais fracos dos últimos 30 dias completos.
   const FULL=ROWS.filter(r=>r.d!==META.parcial);const L30=FULL.slice(-30);const w=3;
   const top=(arr,k,desc)=>[...arr].sort((a,b)=>desc?b[k]-a[k]:a[k]-b[k]).slice(0,Math.min(w,arr.length));
   const m=(arr,k)=>arr.reduce((x,r)=>x+r[k],0)/(arr.length||1);
   const days=arr=>{const ds=arr.map(r=>r.d).sort();return ds.map(d=>dm(d)).join(", ")};
-  const win=k=>{const P=top(FULL,k,true),M=top(L30,k,false);return{pico:m(P,k),min:m(M,k),picoDays:days(P),minDays:days(M)}};
-  const W={p:win("p"),n:win("n"),s:win("s"),o:win("o")};
+  const win=k=>{const F=k==="r"?FULL.filter(x=>x.d>=R0):FULL,L=k==="r"?L30.filter(x=>x.d>=R0):L30;const P=top(F,k,true),M=top(L,k,false);return{pico:m(P,k),min:m(M,k),picoDays:days(P),minDays:days(M)}};
+  const W={p:win("p"),n:win("n"),s:win("s"),r:win("r"),o:win("o")};
   const maxDay=rows.reduce((a,r)=>r.o>a.o?r:a,rows[0]), minDay=rows.reduce((a,r)=>r.o<a.o?r:a,rows[0]);
-  const prodPct=tp+tn?[tp/(tp+tn)*100,tn/(tp+tn)*100]:[0,0];
+  const tss=tp+tn+tr;const prodPct=tss?[tp/tss*100,tn/tss*100,tr/tss*100]:[0,0,0];
   PER={avg,W,ord,n};
   $("#per-lbl").textContent=`${dmw(rows[0].d)} → ${dmw(rows[n-1].d)} · ${n} dia${n>1?"s":""}`;
 
@@ -996,12 +1001,12 @@ function render(){
   const K=[
    ["Pedidos pagos",fmt(ord),`${fmt(it)} itens · pendentes/expirados excluídos`],
    ["Pedidos / dia",fmt(avg.o),`pico ${fmt(maxDay.o)} (${dm(maxDay.d)}) · mín ${fmt(minDay.o)} (${dm(minDay.d)})`],
-   ["Soma Sculpt / pedido",(tp+tn)/ord>0?((tp+tn)/ord).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—",`piña + naranja ÷ pedidos · ${f1(it/ord)} itens/pedido com shaker`],
+   ["Soma Sculpt / pedido",tss/ord>0?(tss/ord).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—",`piña + naranja + frutos rojos ÷ pedidos · ${f1(it/ord)} itens/pedido com shaker`],
    ["Piña / dia",fmt(avg.p),`${f1(prodPct[0])}% do Soma Sculpt`],
    ["Naranja / dia",fmt(avg.n),`${f1(prodPct[1])}% do Soma Sculpt`],
+   ["Frutos Rojos / dia",fmt(avg.r),rL.length?`${f1(prodPct[2])}% do Soma Sculpt · média desde ${dm(R0)}`:"lançado em 11/11"],
    ["Shaker / dia",fmt(avg.s),`${f1(ts/ord*100)}% dos pedidos levam`],
-   ["Pico (ped/dia)",fmt(W.o.pico),`3 dias mais fortes do histórico: ${W.o.picoDays}`],
-   ["Mínimo (ped/dia)",fmt(W.o.min),`3 dias mais fracos dos últimos 30 d: ${W.o.minDays}`],
+   ["Pico · mínimo (ped/dia)",`${fmt(W.o.pico)} · ${fmt(W.o.min)}`,`pico: 3 dias mais fortes (${W.o.picoDays}) · mínimo: 3 mais fracos dos últimos 30 d (${W.o.minDays})`],
   ];
   $("#kpis").innerHTML=K.map(([a,b,c])=>`<div class="kpi"><div class="eyebrow">${a}</div><div class="v">${b}</div><div class="s">${c}</div></div>`).join("");
 
@@ -1053,7 +1058,7 @@ function render(){
   const lab=rows.map(r=>dm(r.d));
   mk("cUnits",{type:"line",data:{labels:lab,datasets:SK.map(([k,nome,tok])=>({label:nome,data:rows.map(r=>r[k]),borderColor:css("--"+tok),backgroundColor:css("--"+tok),borderWidth:2,pointRadius:rows.length>45?0:2.5,pointHoverRadius:5,tension:.25}))},options:baseOpts()});
   mk("cOrders",{type:"bar",data:{labels:lab,datasets:[{label:"Pedidos",data:rows.map(r=>r.o),backgroundColor:css("--accent"),borderRadius:3,borderSkipped:"bottom",maxBarThickness:28}]},options:baseOpts({plugins:{legend:{display:false}}})});
-  mk("cTot",{type:"bar",data:{labels:SK.map(x=>x[1]),datasets:[{data:[tp,tn,ts],backgroundColor:SK.map(x=>css("--"+x[2])),borderRadius:4,borderSkipped:"bottom",maxBarThickness:60}]},options:baseOpts({indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:css("--muted"),callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}},y:{ticks:{color:css("--fg")},grid:{display:false}}}})});
+  mk("cTot",{type:"bar",data:{labels:SK.map(x=>x[1]),datasets:[{data:[tp,tn,ts,tr],backgroundColor:SK.map(x=>css("--"+x[2])),borderRadius:4,borderSkipped:"bottom",maxBarThickness:60}]},options:baseOpts({indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:css("--muted"),callback:v=>fmt(v)},grid:{color:css("--line")},border:{display:false}},y:{ticks:{color:css("--fg")},grid:{display:false}}}})});
   renderDist();renderPlan();renderBolsas();renderCedi();
   // daily table
   // Link de oferta (produto oculto com o mesmo SKU; já somado acima)
@@ -1064,7 +1069,7 @@ function render(){
      ["Diferença p/ preço cheio",cop(lu*(LK.cheio-LK.preco)),`${cop(LK.cheio-LK.preco)} a menos por unidade vs ${cop(LK.cheio)}`],
      ["Última venda pelo link",last?dm(last):"—",`${fmt(ds.length)} dias com venda desde ${ds.length?dm(ds[0]):"—"}`]];
    $("#lnk").innerHTML=`<div class="lnk-h"><div><div class="eyebrow">Link de oferta · ${LK.nome} a ${cop(LK.preco)}</div><p class="note">Produto oculto na loja, com o mesmo SKU do Soma Sculpt: estas vendas já estão dentro dos números acima. <a href="${LK.url}" target="_blank" rel="noopener">Abrir link</a></p></div><span class="note">Shopify · ${LK.lido_em}</span></div><div class="kpis">${KL.map(([a,b,c])=>`<div class="kpi"><div class="eyebrow">${a}</div><div class="v">${b}</div><div class="s">${c}</div></div>`).join("")}</div>`;}
-  $("#daily").innerHTML=`<tr><th>Dia</th><th>Pedidos</th><th>Itens</th><th>Piña</th><th>Naranja</th><th>Shaker</th></tr>`+rows.map(r=>`<tr><td>${dmw(r.d)}${r.d===META.parcial?" <span class='note'>(parcial)</span>":""}</td><td class="num">${fmt(r.o)}</td><td class="num">${fmt(r.i)}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.n)}</td><td class="num">${fmt(r.s)}</td></tr>`).join("")+`<tr><td><b>Total</b></td><td class="num"><b>${fmt(ord)}</b></td><td class="num"><b>${fmt(it)}</b></td><td class="num"><b>${fmt(tp)}</b></td><td class="num"><b>${fmt(tn)}</b></td><td class="num"><b>${fmt(ts)}</b></td></tr>`;
+  $("#daily").innerHTML=`<tr><th>Dia</th><th>Pedidos</th><th>Itens</th><th>Piña</th><th>Naranja</th><th>Shaker</th><th>F. Rojos</th></tr>`+rows.map(r=>`<tr><td>${dmw(r.d)}${r.d===META.parcial?" <span class='note'>(parcial)</span>":""}</td><td class="num">${fmt(r.o)}</td><td class="num">${fmt(r.i)}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.n)}</td><td class="num">${fmt(r.s)}</td><td class="num">${fmt(r.r||0)}</td></tr>`).join("")+`<tr><td><b>Total</b></td><td class="num"><b>${fmt(ord)}</b></td><td class="num"><b>${fmt(it)}</b></td><td class="num"><b>${fmt(tp)}</b></td><td class="num"><b>${fmt(tn)}</b></td><td class="num"><b>${fmt(ts)}</b></td><td class="num"><b>${fmt(tr)}</b></td></tr>`;
 }
 render();
 showTab(h0==="lotes"?"lotes":"ruptura");

@@ -101,8 +101,8 @@ HTML = '''
 
 JS = r'''
 /* ===================== Previsão · Produção (teste) ===================== */
-const PV_DEF={transp:7,seg:5,totalMes:null,media:350,pct:0.30,horiz:45,estoque:{p:null,n:null,s:null}};
-const PV_SKU=[["p","Piña","SOMAPINA","pina"],["n","Naranja","SOMANARANJA","naranja"],["s","Shaker","Shaker","shaker"]];
+const PV_DEF={transp:7,seg:5,totalMes:null,media:350,pct:0.30,horiz:45,estoque:{p:null,n:null,s:null,r:null}};
+const PV_SKU=[["p","Piña","SOMAPINA","pina"],["n","Naranja","SOMANARANJA","naranja"],["s","Shaker","Shaker","shaker"],["r","Frutos Rojos","SOMAROJO","rojo"]];
 const PV_KEY="soma-prev-v1";
 const PV_SIT=["Em produção","Enviado","Recebido"];
 let PV_SHEET={params:null,prog:[],andamento:null,st:"lendo a planilha…",ok:false};
@@ -112,7 +112,7 @@ const pvSave=()=>{try{localStorage.setItem(PV_KEY,JSON.stringify(PVS))}catch(_){
 const pvAdd=(s,n)=>iso(addD(pd(s),n));
 const pvDiff=(a,b)=>Math.round((pd(a)-pd(b))/864e5);
 const pvNum=v=>{if(v==null||v==="")return null;if(typeof v==="number")return isFinite(v)?v:null;let s=String(v).trim();const pc=/%$/.test(s);s=s.replace("%","").replace(/\s/g,"");if(/,\d{1,2}$/.test(s))s=s.replace(/\./g,"").replace(",",".");else s=s.replace(/,/g,"");const x=parseFloat(s);return isFinite(x)?(pc?x/100:x):null};
-const pvProdKey=s=>{s=String(s||"").toLowerCase();return /pi[nñ]a|somapina/.test(s)?"p":/naranja/.test(s)?"n":/shaker/.test(s)?"s":null};
+const pvProdKey=s=>{s=String(s||"").toLowerCase();return /pi[nñ]a|somapina/.test(s)?"p":/naranja/.test(s)?"n":/shaker/.test(s)?"s":/rojo|frutos/.test(s)?"r":null};
 const pvRGBA=(hex,a)=>{const h=String(hex).replace("#","");if(h.length<6)return hex;const n=parseInt(h.slice(0,6),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`};
 const pvEsc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pvDm=s=>s?dm(s):"—";
@@ -148,7 +148,7 @@ function pvHist(){
   const start=last7.reduce((a,r)=>a+r.o,0)/Math.max(1,last7.length);
   const mo=pvMed(last14.map(r=>r.o));const norm=last14.filter(r=>r.o>=0.5*mo&&r.o<=1.6*mo);
   const upo={},hu={};
-  PV_SKU.forEach(([k])=>{const mr=pvMed(norm.map(r=>r[k]/r.o));const ok=norm.filter(r=>r[k]/r.o>=0.5*mr);const O=ok.reduce((a,r)=>a+r.o,0),U=ok.reduce((a,r)=>a+r[k],0);upo[k]=O?U/O:0;hu[k]=ok.length?U/ok.length:0});
+  PV_SKU.forEach(([k])=>{const nb=k==="r"?full.filter(r=>(r.r||0)>=50).slice(-14):norm;const mr=pvMed(nb.map(r=>(r[k]||0)/r.o));const ok=nb.filter(r=>(r[k]||0)/r.o>=0.5*mr);const O=ok.reduce((a,r)=>a+r.o,0),U=ok.reduce((a,r)=>a+(r[k]||0),0);upo[k]=O?U/O:0;hu[k]=ok.length?U/ok.length:0});
   const ho=norm.reduce((a,r)=>a+r.o,0)/Math.max(1,norm.length);
   return {full,start,upo,hu,ho,norm,last7,last14,excl:last14.length-norm.length};
 }
