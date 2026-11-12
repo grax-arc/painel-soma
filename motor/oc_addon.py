@@ -340,6 +340,8 @@ def add_prev(src):
     js = prev_parts.JS + '\n{const _st=showTab;showTab=function(t){_st(t);if(t==="rup2")Object.values(CH).forEach(c=>{try{c.resize()}catch(_){}})}}\n'
     return src[:j2] + js + src[j2:]
 s_test = add_prev(s)
+import rupesg_parts
+s_test = rupesg_parts.apply(s_test)   # aba de teste "Ruptura · esgotados"
 open(os.path.join(BUILD, "painel_teste.html"), "w", encoding="utf-8").write(s_test)
 
 # embrulha: teste.html (abre na aba OC) e index.html oficial (abre em Ruptura, com a aba OC disponível)

@@ -24,23 +24,31 @@ meta = load("meta.json")
 # para a cobertura e o ponto de ruptura já considerarem essa fila. O desconto de uma bodega deixa de valer
 # quando o disponível dela sobe mais de 20 un. acima da base (a Melonn recebeu mercadoria e atendeu a fila).
 esg_aplicado = {}
+ESG = {"lido_em": None, "fonte": "", "aplicado": {}, "arquivo": {}, "absorvido": {}, "fixo": {}}
+def _add(d, k, b, q):
+    d.setdefault(k, {})[b] = d.get(k, {}).get(b, 0) + q
 if os.path.exists(os.path.join(BASE, "esgotados.json")):
     esg = load("esgotados.json")
+    ESG["lido_em"], ESG["fonte"] = esg.get("lido_em"), esg.get("fonte", "")
     for k, bods in esg.get("skus", {}).items():
         for b, (q, base) in bods.items():
             if q <= 0 or k not in stock or b not in stock[k]["bod"]:
                 continue
+            _add(ESG["arquivo"], k, b, q)
             agora = stock[k]["bod"][b][0]
             if agora - base > 20:
+                _add(ESG["absorvido"], k, b, q)
                 continue
             stock[k]["bod"][b] = [agora - q, stock[k]["bod"][b][1]]
             esg_aplicado["%s %s" % (k, b)] = q
+            _add(ESG["aplicado"], k, b, q)
     # esgotados que não saem com a chegada de mercadoria (ex.: SKU SOMAROJOS sem ligação ao estoque SOMAROJO)
     for k, bods in esg.get("fixos", {}).items():
         for b, q in bods.items():
             if q > 0 and k in stock and b in stock[k]["bod"]:
                 stock[k]["bod"][b] = [stock[k]["bod"][b][0] - q, stock[k]["bod"][b][1]]
                 esg_aplicado["%s %s fixo" % (k, b)] = q
+                _add(ESG["arquivo"], k, b, q); _add(ESG["aplicado"], k, b, q); _add(ESG["fixo"], k, b, q)
 melj = load("melonn.json")
 mel = {b: {"bodega": b, "lido_em": melj["lido_em"],
            "skus": {k: {"disp": v[0], "esp": v[1], "res": v[2], "al": v[3]} for k, v in d.items()}}
@@ -56,14 +64,14 @@ assert meta["parcial"] == ds[-1], "meta.parcial deve ser o último dia de rows.j
 
 html = raw("template.html")
 assert html.count("/*__DATA__*/") == 1
-html = html.replace("/*__DATA__*/", "const ROWS=%s;const STOCK=%s;const META=%s;const DIST=%s;const FECHS=%s;const DRIVE_FOLDER=%s;const MEL0=%s;const LOTES0=%s;const LINKS=%s;" % (
+html = html.replace("/*__DATA__*/", "const ROWS=%s;const STOCK=%s;const META=%s;const DIST=%s;const FECHS=%s;const DRIVE_FOLDER=%s;const MEL0=%s;const LOTES0=%s;const LINKS=%s;const ESG=%s;" % (
     json.dumps(rows, separators=(",", ":")),
     json.dumps(stock, ensure_ascii=False, separators=(",", ":")),
     json.dumps(meta, separators=(",", ":")),
     raw("dist.json"), raw("fechs.json"),
     json.dumps("https://drive.google.com/drive/folders/1qoPjeOugGa_uQYzBN-GTKjfAbnvf2EaC"),
     json.dumps(mel, ensure_ascii=False, separators=(",", ":")),
-    raw("lotes_embed.json"), raw("links.json")))
+    raw("lotes_embed.json"), raw("links.json"), json.dumps(ESG, ensure_ascii=False, separators=(",", ":"))))
 with open(os.path.join(BUILD, "painel_ruptura_soma.html"), "w", encoding="utf-8") as f:
     f.write(html)
 print("gen ok", len(html), "esgotados descontados:", esg_aplicado or "nenhum")
