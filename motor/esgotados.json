@@ -1,88 +1,80 @@
 {
- "lido_em": "2026-11-12T16:08",
- "fonte": "sell_orders da Melonn: pedidos 'on stand by - not able to fulfil - no stock', criados de 11/11 08:32 a 12/11 12:59 (coluna Cantidad agotada)",
- "regra": "[esgotados, disponível Shopify da bodega antes da leitura]. O painel desconta os esgotados do disponível da bodega. Se o disponível subir mais de 20 un. acima da base, a Melonn recebeu mercadoria e usou para esses pedidos: o desconto daquela bodega deixa de valer. Troque este arquivo quando chegar um sell_orders novo.",
+ "lido_em": "2026-11-19T15:56",
+ "fonte": "sell_orders da Melonn: 588 pedidos 'on stand by - not able to fulfil - no stock', criados de 11/11 09:11 a 19/11 13:52 (coluna Cantidad agotada; só SOMAPINA, SOMANARANJA, SHAKER e SOMAROJO)",
+ "regra": "[esgotados, disponível Shopify da bodega na hora da leitura]. O painel desconta os esgotados do disponível da bodega. Se o disponível subir mais de 20 un. acima da base, a Melonn recebeu mercadoria e atendeu a fila: o desconto daquela bodega deixa de valer. Troque este arquivo quando chegar um sell_orders novo.",
+ "fora_da_conta": "SOMAROJOS (código antigo do Limitado): 143 un. esgotadas (Cali 142, Barranquilla 1) — não descontadas, por decisão de 19/11 (agora só SOMAROJO)",
  "skus": {
   "p": {
    "Bogotá": [
-    673,
-    0
+    0,
+    3420
    ],
    "Medellín": [
-    179,
-    220
+    0,
+    2129
    ],
    "Cali": [
-    108,
-    0
+    0,
+    450
    ],
    "Barranquilla": [
-    0,
-    62
+    296,
+    0
    ]
   },
   "n": {
    "Bogotá": [
     0,
-    3053
+    2611
    ],
    "Medellín": [
     0,
-    1536
+    1646
    ],
    "Cali": [
-    0,
-    27
+    12,
+    0
    ],
    "Barranquilla": [
     0,
-    674
+    298
    ]
   },
   "s": {
    "Bogotá": [
     0,
-    12800
+    9663
    ],
    "Medellín": [
     0,
-    10263
+    8791
    ],
    "Cali": [
     0,
-    2385
+    2165
    ],
    "Barranquilla": [
     0,
-    2777
+    2656
    ]
   },
   "r": {
    "Bogotá": [
-    0,
-    2375
+    326,
+    0
    ],
    "Medellín": [
-    0,
-    1112
+    174,
+    0
    ],
    "Cali": [
-    21,
+    92,
     0
    ],
    "Barranquilla": [
-    12,
-    0
+    61,
+    478
    ]
   }
- },
- "fixos": {
-  "r": {
-   "Bogotá": 1226,
-   "Medellín": 537,
-   "Cali": 160,
-   "Barranquilla": 40
-  }
- },
- "regra_fixos": "Pedidos do 'Soma Sculpt - Limitado' que chegam na Melonn com SKU SOMAROJOS (o estoque está em SOMAROJO): a Melonn não os atende com a mercadoria que chega, então o desconto não para sozinho. Zere quando a Melonn corrigir o código ou chegar um sell_orders novo."
+ }
 }
