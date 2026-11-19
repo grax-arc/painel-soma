@@ -49,9 +49,9 @@
    ],
    "r": [
     0,
+    1010,
     0,
-    0,
-    0
+    39
    ]
   },
   "Cali": {
@@ -75,7 +75,7 @@
    ],
    "r": [
     0,
-    0,
+    382,
     0,
     0
    ]
@@ -106,5 +106,6 @@
     0
    ]
   }
- }
+ },
+ "nota_rojo": "Esperada SOMAROJO de Medellín (1.010) e Cali (382) estimada: total 2.942 do print geral de 19/11 menos Bogotá 1.300 e Barranquilla 250, dividido pela venda de cada bodega. Trocar pela divisão real quando vier o print por bodega."
 }
