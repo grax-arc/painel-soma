@@ -1,111 +1,110 @@
 {
- "lido_em": "2026-11-19T15:50:00",
+ "lido_em": "2026-11-23T10:15:00",
  "nota": "[disponible, esperada, reservada, alistada] por SKU (p=Piña, n=Naranja, s=Shaker, r=Frutos Rojos) — prints do Reporte inventario da Melonn; só muda quando chegam prints novos",
  "bodegas": {
   "Bogotá": {
    "p": [
-    3421,
-    417,
-    350,
-    741
+    2544,
+    5186,
+    908,
+    66
    ],
    "n": [
-    2613,
+    1989,
     7203,
-    237,
-    642
+    667,
+    76
    ],
    "s": [
-    9664,
+    8799,
     0,
-    321,
-    930
+    894,
+    46
    ],
    "r": [
     0,
-    1300,
-    88,
-    1197
+    3278,
+    0,
+    136
    ]
   },
   "Medellín": {
    "p": [
-    2129,
-    200,
-    148,
-    78
+    1732,
+    2533,
+    976,
+    61
    ],
    "n": [
-    1646,
-    5650,
-    86,
-    60
+    6190,
+    400,
+    745,
+    41
    ],
    "s": [
-    8794,
+    7285,
     0,
-    142,
-    54
+    1204,
+    142
    ],
    "r": [
+    1781,
     0,
-    1010,
-    0,
-    39
+    917,
+    12
    ]
   },
   "Cali": {
    "p": [
-    450,
-    100,
-    95,
-    25
+    0,
+    500,
+    292,
+    63
    ],
    "n": [
-    1,
-    900,
-    42,
-    11
+    0,
+    600,
+    282,
+    30
    ],
    "s": [
-    2165,
+    1867,
     0,
-    113,
-    11
+    179,
+    63
    ],
    "r": [
     0,
-    382,
-    0,
-    0
+    350,
+    108,
+    84
    ]
   },
   "Barranquilla": {
    "p": [
     0,
-    300,
+    700,
     14,
     0
    ],
    "n": [
-    299,
+    134,
     1200,
-    334,
-    5
+    321,
+    52
    ],
    "s": [
-    2658,
+    2424,
     0,
-    110,
-    1
+    104,
+    63
    ],
    "r": [
-    481,
-    250,
-    118,
-    0
+    0,
+    450,
+    84,
+    148
    ]
   }
- },
- "nota_rojo": "Esperada SOMAROJO de Medellín (1.010) e Cali (382) estimada: total 2.942 do print geral de 19/11 menos Bogotá 1.300 e Barranquilla 250, dividido pela venda de cada bodega. Trocar pela divisão real quando vier o print por bodega."
+ }
 }
