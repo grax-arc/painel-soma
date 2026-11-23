@@ -39,9 +39,16 @@ if os.path.exists(os.path.join(BASE, "esgotados.json")):
             if agora - base > 20:
                 _add(ESG["absorvido"], k, b, q)
                 continue
-            stock[k]["bod"][b] = [agora - q, stock[k]["bod"][b][1]]
-            esg_aplicado["%s %s" % (k, b)] = q
-            _add(ESG["aplicado"], k, b, q)
+            # bodega que já tinha estoque na leitura: quando a Melonn reserva esses pedidos, o disponível cai;
+            # o que caiu abaixo da base sai do desconto (evita descontar duas vezes)
+            q2 = max(0, q - max(0, base - agora))
+            if q2 < q:
+                _add(ESG["absorvido"], k, b, q - q2)
+            if q2 <= 0:
+                continue
+            stock[k]["bod"][b] = [agora - q2, stock[k]["bod"][b][1]]
+            esg_aplicado["%s %s" % (k, b)] = q2
+            _add(ESG["aplicado"], k, b, q2)
     # esgotados que não saem com a chegada de mercadoria (ex.: SKU SOMAROJOS sem ligação ao estoque SOMAROJO)
     for k, bods in esg.get("fixos", {}).items():
         for b, q in bods.items():

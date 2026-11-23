@@ -156,8 +156,10 @@ def validar_e_mesclar(E):
         raise Erro(f"skus: faltam linhas de {sorted({'p','n','s'} - vistos)} — confira a consulta 2")
 
     # base para checar faixas: últimos 14 dias completos já publicados
-    hist = [r for r in rows if r["d"] < dias[0] and r["d"] != ult_ant][-14:] or rows[-15:-1]
-    med = lambda k: sorted(r[k] for r in hist)[len(hist) // 2]
+    # faixa normal: mediana dos 14 dias fechados anteriores a cada dia checado (acompanha mudanças de mix, ex.: lançamento do Frutos Rojos)
+    def med(k, d):
+        h = [by[x][k] for x in sorted(by) if x < d and x != ult_ant][-14:]
+        return sorted(h)[len(h) // 2] if h else 0
     avisos = []
     for d in dias:
         o, i = ped[d]
@@ -175,7 +177,7 @@ def validar_e_mesclar(E):
                     raise Erro(f"{d}: {k} mudou de {a} para {b} num dia já fechado — provável erro de transcrição")
         if not parcial:
             for k in ("o", "p", "n"):
-                m = med(k)
+                m = med(k, d)
                 if m and not (0.3 * m <= novo[k] <= 3.0 * m):
                     raise Erro(f"{d}: {k}={novo[k]} fora da faixa normal (mediana 14 d = {m})")
         if d in by and by[d] != novo:
@@ -196,8 +198,9 @@ def validar_e_mesclar(E):
         if k is None or b is None:
             continue
         av, cm = n_int(x[2]), n_int(x[3])
-        if av < 0 or cm < 0:
-            raise Erro(f"estoque negativo em {x}")
+        if cm < 0:
+            raise Erro(f"comprometido negativo em {x}")
+        av = max(av, 0)   # a Shopify às vezes mostra -1 (venda acima do disponível): conta como 0
         if (k, b) in novos:   # mesmo SKU em vários produtos: disponível é o mesmo, comprometido soma
             novos[(k, b)] = [max(av, novos[(k, b)][0]), novos[(k, b)][1] + cm]
         else:
