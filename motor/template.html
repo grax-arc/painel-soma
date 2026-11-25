@@ -617,7 +617,7 @@ const PRESETS=[
 const pb=$("#presets");
 PRESETS.forEach(([l,f],i)=>{const b=document.createElement("button");b.id="pre"+i;b.textContent=l;b.onclick=()=>{const[a,z]=f();d1.value=a;d2.value=z;store.preset=i;render()};pb.appendChild(b)});
 inc.checked=!!store.inchoje;
-if(store.d1&&store.d2){d1.value=store.d1;d2.value=store.d2}else{const[a,z]=PRESETS[0][1]();d1.value=a;d2.value=z;store.preset=0}
+if(Number.isInteger(store.preset)&&store.preset>=0&&PRESETS[store.preset]){const[a,z]=PRESETS[store.preset][1]();d1.value=a;d2.value=z}else if(store.d1&&store.d2){d1.value=store.d1;d2.value=store.d2}else{const[a,z]=PRESETS[0][1]();d1.value=a;d2.value=z;store.preset=0}
 [d1,d2].forEach(e=>e.onchange=()=>{store.preset=-1;render()});inc.onchange=render;
 
 /* ---------- transit inputs ---------- */
@@ -983,8 +983,8 @@ function render(){
   if(!rows.length){rows=ROWS.filter(r=>r.d===d2.value)}
   const n=rows.length, sum=k=>rows.reduce((a,r)=>a+r[k],0);
   const ord=sum("o"),it=sum("i"),tp=sum("p"),tn=sum("n"),ts=sum("s"),tr=sum("r");
-  const rL=rows.filter(x=>x.d>=R0);
-  const avg={p:tp/n,n:tn/n,s:ts/n,r:rL.length?rL.reduce((a,x)=>a+x.r,0)/rL.length:0,o:ord/n};
+  const rL=rows.filter(x=>x.d>=R0);const rFb=!rL.length;const RL7=ROWS.filter(x=>x.d>=R0&&x.d!==META.parcial).slice(-7);
+  const avg={p:tp/n,n:tn/n,s:ts/n,r:rL.length?rL.reduce((a,x)=>a+x.r,0)/rL.length:(RL7.length?RL7.reduce((a,x)=>a+x.r,0)/RL7.length:0),o:ord/n};
   // Cenários independentes do período: Pico = média dos 3 dias mais fortes de todo o histórico; Mínimo = média dos 3 dias mais fracos dos últimos 30 dias completos.
   const FULL=ROWS.filter(r=>r.d!==META.parcial);const L30=FULL.slice(-30);const w=3;
   const top=(arr,k,desc)=>[...arr].sort((a,b)=>desc?b[k]-a[k]:a[k]-b[k]).slice(0,Math.min(w,arr.length));
@@ -1012,7 +1012,7 @@ function render(){
 
   // rupture cards
   const rup=$("#rup");rup.innerHTML="";
-  const scen=(k)=>[["Mínimo",W[k].min,W[k].minDays],["Média",avg[k],"período selecionado"],["Pico",W[k].pico,W[k].picoDays]];
+  const scen=(k)=>[["Mínimo",W[k].min,W[k].minDays],["Média",avg[k],k==="r"&&rFb?`últimos 7 dias (lançado em ${dm(R0)})`:"período selecionado"],["Pico",W[k].pico,W[k].picoDays]];
   const cls=days=>days<=3?"crit":days<=7?"warn":"good";
   SK.forEach(([k,nome,tok])=>{
     const st=STOCK[k];const avail=Object.values(st.bod).reduce((a,[x])=>a+x,0);const comm=Object.values(st.bod).reduce((a,[,c])=>a+c,0);
