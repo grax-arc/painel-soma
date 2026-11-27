@@ -1,77 +1,77 @@
 {
- "lido_em": "2026-11-25T09:39",
- "fonte": "sell_orders da Melonn: 523 pedidos 'on stand by - not able to fulfil - no stock', criados de 17/11 18:32 a 24/11 16:42 (coluna Cantidad agotada; só SOMAPINA, SOMANARANJA, SHAKER e SOMAROJO)",
- "regra": "[esgotados, disponível Shopify da bodega na hora da leitura]. O painel desconta os esgotados do disponível da bodega. Se o disponível subir mais de 20 un. acima da base, a Melonn recebeu mercadoria e atendeu a fila: o desconto deixa de valer. Se o disponível cair abaixo da base, essa queda sai do desconto (a Melonn reservou esses pedidos com o estoque que já estava lá). Troque este arquivo quando chegar um sell_orders novo.",
+ "lido_em": "2026-11-27T16:55",
+ "fonte": "Admin da Melonn, Ventas > Órdenes de venta, estado 'Con agotado': 5 pedidos (Barranquilla, criados 27/11 11:36), só SOMAROJO esgotado (8 un.)",
+ "regra": "[esgotados, disponível Shopify da bodega na hora da leitura]. O painel desconta os esgotados do disponível da bodega. Se o disponível subir mais de 20 un. acima da base, a Melonn recebeu mercadoria e atendeu a fila: o desconto deixa de valer. Se o disponível cair abaixo da base, essa queda sai do desconto (a Melonn reservou esses pedidos com o estoque que já estava lá). Troque este arquivo a cada nova leitura de esgotados.",
  "skus": {
   "p": {
    "Bogotá": [
     0,
-    3465
+    6146
    ],
    "Medellín": [
     0,
-    2960
+    7080
    ],
    "Cali": [
     0,
-    137
+    502
    ],
    "Barranquilla": [
-    292,
-    0
+    0,
+    10
    ]
   },
   "n": {
    "Bogotá": [
     0,
-    9087
+    8149
    ],
    "Medellín": [
     0,
-    5492
+    5248
    ],
    "Cali": [
     0,
-    775
+    701
    ],
    "Barranquilla": [
     0,
-    105
+    492
    ]
   },
   "s": {
    "Bogotá": [
     0,
-    8712
+    7363
    ],
    "Medellín": [
     0,
-    6141
+    5830
    ],
    "Cali": [
     0,
-    1892
+    1827
    ],
    "Barranquilla": [
     0,
-    2395
+    2450
    ]
   },
   "r": {
    "Bogotá": [
     0,
-    2045
+    0
    ],
    "Medellín": [
-    961,
-    0
+    0,
+    536
    ],
    "Cali": [
-    42,
-    0
+    0,
+    199
    ],
    "Barranquilla": [
-    0,
+    8,
     0
    ]
   }
